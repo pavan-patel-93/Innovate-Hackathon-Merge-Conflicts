@@ -6,7 +6,6 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from app.routes.upload import router as upload_router
 
-
 # Create FastAPI instance
 app = FastAPI(
     title="Innovate Hackathon API",
