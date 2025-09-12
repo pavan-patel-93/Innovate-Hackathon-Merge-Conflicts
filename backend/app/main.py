@@ -1,5 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os, sys
+
+# Add the current directory to the path so we can import modules from the current directory
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from app.routes.upload import router as upload_router
+
+from dotenv import load_dotenv
+load_dotenv() 
 
 # Create FastAPI instance
 app = FastAPI(
@@ -18,6 +26,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(upload_router, prefix="/upload", tags=["upload"])
 
 # Root endpoint
 @app.get("/")
