@@ -4,8 +4,8 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 export const metadata = {
-  title: "My App",
-  description: "Using Geist font in Next.js",
+  title: "ComplianceAI - AI-Powered Compliance Assistant",
+  description: "Automated regulatory document validation and compliance checking for Healthtech companies",
 };
 
 export default function RootLayout({ children }) {

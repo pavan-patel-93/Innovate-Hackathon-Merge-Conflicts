@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { authService } from '@/services/auth';
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -9,18 +8,39 @@ export const useAuthStore = create((set, get) => ({
 
   login: async (credentials) => {
     set({ isLoading: true, error: null });
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
-      const data = await authService.login(credentials);
-      const user = await authService.getCurrentUser();
+      // Simple demo authentication - accept any username/password
+      if (!credentials.username || !credentials.password) {
+        throw new Error('Username and password are required');
+      }
+
+      const user = {
+        id: Date.now().toString(),
+        username: credentials.username,
+        email: credentials.email || `${credentials.username}@example.com`,
+        role: 'compliance_analyst',
+        department: 'Quality Assurance',
+        createdAt: new Date().toISOString()
+      };
+
+      // Store in localStorage for persistence
+      localStorage.setItem('compliance_user', JSON.stringify(user));
+      localStorage.setItem('compliance_token', 'demo_token_' + Date.now());
+
       set({ 
         user, 
         isAuthenticated: true, 
         isLoading: false 
       });
-      return data;
+      
+      return { user, token: 'demo_token' };
     } catch (error) {
       set({ 
-        error: error.response?.data?.detail || 'Login failed', 
+        error: error.message || 'Login failed', 
         isLoading: false 
       });
       throw error;
@@ -29,13 +49,43 @@ export const useAuthStore = create((set, get) => ({
 
   register: async (userData) => {
     set({ isLoading: true, error: null });
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
-      const data = await authService.register(userData);
-      set({ isLoading: false });
-      return data;
+        console.log("User Data ::::: ", userData)
+      if (!userData.username || !userData.password) {
+        throw new Error('Username and password are required');
+      }
+
+      if (userData.password !== userData.confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+
+      const user = {
+        id: Date.now().toString(),
+        username: userData.username,
+        email: userData.email,
+        role: 'compliance_analyst',
+        department: 'Quality Assurance',
+        createdAt: new Date().toISOString()
+      };
+
+      // Store in localStorage for persistence
+      localStorage.setItem('compliance_user', JSON.stringify(user));
+      localStorage.setItem('compliance_token', 'demo_token_' + Date.now());
+
+      set({ 
+        user, 
+        isAuthenticated: true, 
+        isLoading: false 
+      });
+      
+      return { user, token: 'demo_token' };
     } catch (error) {
       set({ 
-        error: error.response?.data?.detail || 'Registration failed', 
+        error: error.message || 'Registration failed', 
         isLoading: false 
       });
       throw error;
@@ -44,8 +94,14 @@ export const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     set({ isLoading: true });
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     try {
-      await authService.logout();
+      // Clear localStorage
+      localStorage.removeItem('compliance_user');
+      localStorage.removeItem('compliance_token');
     } finally {
       set({ 
         user: null, 
@@ -56,16 +112,23 @@ export const useAuthStore = create((set, get) => ({
   },
 
   checkAuth: async () => {
-    if (!authService.isAuthenticated()) {
-      set({ user: null, isAuthenticated: false });
-      return;
-    }
-
+    set({ isLoading: true });
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     try {
-      const user = await authService.getCurrentUser();
-      set({ user, isAuthenticated: true });
+      const storedUser = localStorage.getItem('compliance_user');
+      const storedToken = localStorage.getItem('compliance_token');
+      
+      if (storedUser && storedToken) {
+        const user = JSON.parse(storedUser);
+        set({ user, isAuthenticated: true, isLoading: false });
+      } else {
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      }
     } catch (error) {
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
