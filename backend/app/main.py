@@ -6,8 +6,6 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from app.routes.upload import router as upload_router
 
-from dotenv import load_dotenv
-load_dotenv() 
 
 # Create FastAPI instance
 app = FastAPI(
