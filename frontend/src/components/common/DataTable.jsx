@@ -7,25 +7,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, ChevronUp, ChevronDown, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface Column {
-  key: string;
-  label: string;
-  sortable?: boolean;
-  render?: (value: any, row: any) => React.ReactNode;
-  className?: string;
-}
+// Column structure
+// {
+//   key: string,
+//   label: string,
+//   sortable?: boolean,
+//   render?: (value, row) => React.ReactNode,
+//   className?: string
+// }
 
-interface DataTableProps {
-  data: any[];
-  columns: Column[];
-  searchable?: boolean;
-  searchPlaceholder?: string;
-  onEdit?: (row: any) => void;
-  onDelete?: (row: any) => void;
-  loading?: boolean;
-  emptyMessage?: string;
-  className?: string;
-}
+// DataTable props structure
+// {
+//   data: any[],
+//   columns: Column[],
+//   searchable?: boolean,
+//   searchPlaceholder?: string,
+//   onEdit?: (row) => void,
+//   onDelete?: (row) => void,
+//   loading?: boolean,
+//   emptyMessage?: string,
+//   className?: string
+// }
 
 export function DataTable({
   data,
@@ -37,12 +39,9 @@ export function DataTable({
   loading = false,
   emptyMessage = "No data available",
   className
-}: DataTableProps) {
+}) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
+  const [sortConfig, setSortConfig] = useState(null);
 
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
@@ -77,7 +76,7 @@ export function DataTable({
     return filtered;
   }, [data, searchTerm, sortConfig, columns]);
 
-  const handleSort = (key: string) => {
+  const handleSort = (key) => {
     setSortConfig((prev) => {
       if (prev?.key === key) {
         return {
@@ -89,7 +88,7 @@ export function DataTable({
     });
   };
 
-  const getSortIcon = (key: string) => {
+  const getSortIcon = (key) => {
     if (sortConfig?.key !== key) return null;
     return sortConfig.direction === "asc" ? (
       <ChevronUp className="w-4 h-4" />
