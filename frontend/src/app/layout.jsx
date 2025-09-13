@@ -1,19 +1,22 @@
-import { Inter } from 'next/font/google'
-import './globals.css'
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
-const inter = Inter({ subsets: ['latin'] })
+import "./globals.css";
 
 export const metadata = {
-  title: 'Next.js + shadcn/ui',
-  description: 'Next.js app with shadcn/ui components',
-}
+  title: "ComplianceAI - AI-Powered Compliance Assistant",
+  description: "Automated regulatory document validation and compliance checking for Healthtech companies",
+};
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        {children}
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
