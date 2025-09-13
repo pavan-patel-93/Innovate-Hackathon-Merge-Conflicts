@@ -5,7 +5,7 @@ from app.api.v1 import api_router
 from app.db.mongodb import close_mongodb_connection
 from app.utils.websocket_manager import manager
 from app.services.chat_service import ChatService
-from app.routes.upload import router as upload_router
+from app.services.upload import router as upload_router
 import json
 
 # Create FastAPI instance
@@ -29,7 +29,7 @@ app.add_middleware(
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
 
-app.include_router(upload_router, prefix="/upload", tags=["upload"])
+app.include_router(upload_router, prefix="/api/v1/documents/upload", tags=["upload"])
 
 # Register WebSocket endpoint directly on the app
 @app.websocket("/ws/{client_id}/{room_name}/{username}")
