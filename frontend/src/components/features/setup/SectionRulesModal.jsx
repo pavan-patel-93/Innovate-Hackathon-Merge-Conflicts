@@ -16,21 +16,13 @@ import {
   ChevronRight
 } from "lucide-react";
 
-interface SectionRulesModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  docTypeId?: string;
-  section?: any;
-  onSave: (updatedSection: any) => void;
-}
-
 export function SectionRulesModal({ 
   isOpen, 
   onClose, 
   docTypeId, 
   section, 
   onSave 
-}: SectionRulesModalProps) {
+}) {
   const { getPredefinedRules } = useSetup();
   const [predefinedRules, setPredefinedRules] = useState([]);
   const [sectionRules, setSectionRules] = useState([]);

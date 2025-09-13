@@ -5,25 +5,9 @@ import { useApi } from "./useApi";
 import { documentAPI } from "@/services/api";
 import { useAuthStore } from "@/store/auth";
 
-interface Document {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  uploadDate: Date;
-  status: 'uploaded' | 'analyzed';
-  complianceScore?: number;
-  issues?: Array<{
-    type: 'critical' | 'major' | 'minor';
-    message: string;
-    severity: number;
-  }>;
-  documentId?: string;
-}
-
 export function useDocuments() {
   const { user } = useAuthStore();
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const {
@@ -55,7 +39,7 @@ export function useDocuments() {
     }
   }, [user, loadDocumentsApi]);
 
-  const analyzeDocument = useCallback(async (documentId: string) => {
+  const analyzeDocument = useCallback(async (documentId) => {
     setIsAnalyzing(true);
     
     try {
@@ -67,7 +51,7 @@ export function useDocuments() {
       
       const updatedFile = {
         ...file,
-        status: 'analyzed' as const,
+        status: 'analyzed',
         complianceScore: analysisResult.score || 0,
         issues: analysisResult.issues || []
       };
@@ -99,7 +83,7 @@ export function useDocuments() {
     }
   }, [documents]);
 
-  const deleteDocument = useCallback(async (documentId: string) => {
+  const deleteDocument = useCallback(async (documentId) => {
     try {
       await documentAPI.deleteDocument(documentId);
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));

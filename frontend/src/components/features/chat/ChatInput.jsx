@@ -4,24 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send, XCircle } from "lucide-react";
 
-interface ChatFile {
-  id: number;
-  name: string;
-  size: number;
-  type: string;
-  uploadDate: Date;
-  file?: File;
-}
-
-interface ChatInputProps {
-  input: string;
-  setInput: (input: string) => void;
-  uploadedFiles: ChatFile[];
-  setUploadedFiles: (files: ChatFile[]) => void;
-  onSendMessage: () => void;
-  onFileUpload: (files: File[]) => void;
-}
-
 export function ChatInput({
   input,
   setInput,
@@ -29,8 +11,8 @@ export function ChatInput({
   setUploadedFiles,
   onSendMessage,
   onFileUpload
-}: ChatInputProps) {
-  const handleFileSelect = (files: File[]) => {
+}) {
+  const handleFileSelect = (files) => {
     const newFiles = files.map(file => ({
       id: Date.now() + Math.random(),
       name: file.name,
@@ -42,11 +24,11 @@ export function ChatInput({
     setUploadedFiles([...uploadedFiles, ...newFiles]);
   };
 
-  const removeFile = (index: number) => {
+  const removeFile = (index) => {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSendMessage();

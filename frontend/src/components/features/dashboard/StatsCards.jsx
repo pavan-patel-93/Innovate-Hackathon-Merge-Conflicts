@@ -3,23 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, BarChart3, Clock } from "lucide-react";
 
-interface Document {
-  id: string;
-  name: string;
-  status: 'uploaded' | 'analyzed';
-  complianceScore?: number;
-  issues?: Array<{
-    type: 'critical' | 'major' | 'minor';
-    message: string;
-    severity: number;
-  }>;
-}
-
-interface StatsCardsProps {
-  documents: Document[];
-}
-
-export function StatsCards({ documents }: StatsCardsProps) {
+export function StatsCards({ documents }) {
   const analyzedCount = documents.filter(d => d.status === 'analyzed').length;
   const pendingCount = documents.filter(d => d.status === 'uploaded').length;
   
@@ -42,13 +26,13 @@ export function StatsCards({ documents }: StatsCardsProps) {
       )
     : 0;
 
-  const getScoreColor = (score: number) => {
+  const getScoreColor = (score) => {
     if (score >= 80) return "text-blue-600 dark:text-blue-400";
     if (score >= 60) return "text-yellow-600 dark:text-yellow-400";
     return "text-red-600 dark:text-red-400";
   };
 
-  const getScoreBgColor = (score: number) => {
+  const getScoreBgColor = (score) => {
     if (score >= 80) return "bg-blue-100 dark:bg-blue-900/30";
     if (score >= 60) return "bg-yellow-100 dark:bg-yellow-900/30";
     return "bg-red-100 dark:bg-red-900/30";

@@ -2,14 +2,7 @@
 
 import { useState, useCallback } from "react";
 
-interface UseModalReturn {
-  isOpen: boolean;
-  open: () => void;
-  close: () => void;
-  toggle: () => void;
-}
-
-export function useModal(initialState = false): UseModalReturn {
+export function useModal(initialState = false) {
   const [isOpen, setIsOpen] = useState(initialState);
 
   const open = useCallback(() => setIsOpen(true), []);

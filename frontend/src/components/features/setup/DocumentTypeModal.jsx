@@ -12,15 +12,6 @@ import {
   Trash2 
 } from "lucide-react";
 
-interface DocumentTypeModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  docType?: any;
-  onSave: (docTypeData: any) => void;
-  isEdit: boolean;
-  onOpenRulesModal: (section: any) => void;
-}
-
 export function DocumentTypeModal({ 
   isOpen, 
   onClose, 
@@ -28,7 +19,7 @@ export function DocumentTypeModal({
   onSave, 
   isEdit, 
   onOpenRulesModal 
-}: DocumentTypeModalProps) {
+}) {
   const [formData, setFormData] = useState({
     code: '',
     name: '',

@@ -2,27 +2,7 @@
 
 import { Bot, User, Paperclip } from "lucide-react";
 
-interface Message {
-  id: number;
-  type: 'user' | 'bot';
-  content: string;
-  files?: Array<{
-    id: number;
-    name: string;
-    size: number;
-    type: string;
-    uploadDate: Date;
-    file?: File;
-  }>;
-  timestamp: Date;
-}
-
-interface ChatMessagesProps {
-  messages: Message[];
-  isTyping: boolean;
-}
-
-export function ChatMessages({ messages, isTyping }: ChatMessagesProps) {
+export function ChatMessages({ messages, isTyping }) {
   return (
     <>
       {messages.map((message) => (
