@@ -180,6 +180,134 @@ export const aiChatAPI = {
   }
 };
 
+// Setup API functions for document type configuration
+export const setupAPI = {
+  // Get all document types
+  getDocumentTypes: async (skip = 0, limit = 100) => {
+    try {
+      const response = await api.get('/api/v1/setup/document-types', {
+        params: { skip, limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching document types:', error);
+      throw error;
+    }
+  },
+
+  // Get document type by ID
+  getDocumentType: async (docTypeId) => {
+    try {
+      const response = await api.get(`/api/v1/setup/document-types/${docTypeId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching document type:', error);
+      throw error;
+    }
+  },
+
+  // Get document type by code
+  getDocumentTypeByCode: async (code) => {
+    try {
+      const response = await api.get(`/api/v1/setup/document-types/code/${code}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching document type by code:', error);
+      throw error;
+    }
+  },
+
+  // Create document type
+  createDocumentType: async (documentType, createdBy = null) => {
+    try {
+      const response = await api.post('/api/v1/setup/document-types', documentType, {
+        params: createdBy ? { created_by: createdBy } : {}
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating document type:', error);
+      throw error;
+    }
+  },
+
+  // Update document type
+  updateDocumentType: async (docTypeId, documentType) => {
+    try {
+      const response = await api.put(`/api/v1/setup/document-types/${docTypeId}`, documentType);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating document type:', error);
+      throw error;
+    }
+  },
+
+  // Delete document type
+  deleteDocumentType: async (docTypeId) => {
+    try {
+      const response = await api.delete(`/api/v1/setup/document-types/${docTypeId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting document type:', error);
+      throw error;
+    }
+  },
+
+  // Reorder sections
+  reorderSections: async (docTypeId, sectionOrders) => {
+    try {
+      const response = await api.put(`/api/v1/setup/document-types/${docTypeId}/sections/reorder`, sectionOrders);
+      return response.data;
+    } catch (error) {
+      console.error('Error reordering sections:', error);
+      throw error;
+    }
+  },
+
+  // Add section rule
+  addSectionRule: async (docTypeId, sectionName, ruleData) => {
+    try {
+      const response = await api.post(`/api/v1/setup/document-types/${docTypeId}/sections/${sectionName}/rules`, ruleData);
+      return response.data;
+    } catch (error) {
+      console.error('Error adding section rule:', error);
+      throw error;
+    }
+  },
+
+  // Update section rule
+  updateSectionRule: async (docTypeId, sectionName, ruleId, ruleData) => {
+    try {
+      const response = await api.put(`/api/v1/setup/document-types/${docTypeId}/sections/${sectionName}/rules/${ruleId}`, ruleData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating section rule:', error);
+      throw error;
+    }
+  },
+
+  // Delete section rule
+  deleteSectionRule: async (docTypeId, sectionName, ruleId) => {
+    try {
+      const response = await api.delete(`/api/v1/setup/document-types/${docTypeId}/sections/${sectionName}/rules/${ruleId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting section rule:', error);
+      throw error;
+    }
+  },
+
+  // Get predefined rules
+  getPredefinedRules: async () => {
+    try {
+      const response = await api.get('/api/v1/setup/predefined-rules');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching predefined rules:', error);
+      throw error;
+    }
+  }
+};
+
 // WebSocket connection manager
 export class WebSocketManager {
   constructor() {

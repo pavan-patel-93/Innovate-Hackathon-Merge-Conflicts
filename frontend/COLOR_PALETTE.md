@@ -176,3 +176,5 @@ The ComplianceAI application now uses a sophisticated, sleek color palette that 
 - Dark mode uses opacity modifiers (`/30`) for subtle backgrounds
 - Colors are available through both CSS variables and Tailwind classes
 - The palette is designed to work seamlessly with the existing theme system
+
+

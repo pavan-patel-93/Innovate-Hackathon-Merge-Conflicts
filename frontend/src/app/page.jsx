@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { documentAPI, aiChatAPI, WebSocketManager } from "@/services/api";
+import { documentAPI, aiChatAPI, setupAPI, WebSocketManager } from "@/services/api";
+import SectionRulesModal from "@/components/Setup/SectionRulesModal";
 import { 
   Shield, 
   LogOut, 
@@ -23,11 +24,17 @@ import {
   Eye,
   Clock,
   Users,
+  Edit,
   MessageSquare,
   Send,
   Paperclip,
   Bot,
-  User
+  Plus,
+  User,
+  Trash2,
+  GripVertical,
+  AlertCircle,
+  Search
 } from "lucide-react";
 
 export default function Home() {
@@ -36,6 +43,16 @@ export default function Home() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [complianceScore, setComplianceScore] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // Setup tab states
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [setupLoading, setSetupLoading] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingDocType, setEditingDocType] = useState(null);
+  const [showRulesModal, setShowRulesModal] = useState(false);
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [setupSearchTerm, setSetupSearchTerm] = useState("");
   
   // Chat states
   const [chatMessages, setChatMessages] = useState([]);
@@ -62,6 +79,13 @@ export default function Home() {
       loadUserDocuments();
     }
   }, [user, isAuthenticated]);
+
+  // Load document types when setup tab is active
+  useEffect(() => {
+    if (activeTab === "setup" && isAuthenticated) {
+      loadDocumentTypes();
+    }
+  }, [activeTab, isAuthenticated]);
 
   const loadUserDocuments = async () => {
     try {
@@ -266,6 +290,87 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
     return "bg-red-100 dark:bg-red-900/30";
   };
 
+  // Setup functions
+  const loadDocumentTypes = async () => {
+    try {
+      setSetupLoading(true);
+      const data = await setupAPI.getDocumentTypes();
+      setDocumentTypes(data);
+    } catch (error) {
+      console.error('Error loading document types:', error);
+    } finally {
+      setSetupLoading(false);
+    }
+  };
+
+  const handleCreateDocumentType = () => {
+    setEditingDocType(null);
+    setShowCreateModal(true);
+  };
+
+  const handleEditDocumentType = (docType) => {
+    setEditingDocType(docType);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteDocumentType = async (docTypeId) => {
+    if (window.confirm('Are you sure you want to delete this document type?')) {
+      try {
+        await setupAPI.deleteDocumentType(docTypeId);
+        await loadDocumentTypes();
+      } catch (error) {
+        console.error('Error deleting document type:', error);
+        alert('Error deleting document type');
+      }
+    }
+  };
+
+  const handleSaveDocumentType = async (docTypeData) => {
+    try {
+      if (editingDocType) {
+        await setupAPI.updateDocumentType(editingDocType.id, docTypeData);
+      } else {
+        await setupAPI.createDocumentType(docTypeData, user?.username);
+      }
+      await loadDocumentTypes();
+      setShowEditModal(false);
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Error saving document type:', error);
+      alert('Error saving document type');
+    }
+  };
+
+  const handleOpenRulesModal = (section) => {
+    setSelectedSection(section);
+    setShowRulesModal(true);
+  };
+
+  const handleSaveSectionRules = async (updatedSection) => {
+    try {
+      if (editingDocType) {
+        const updatedSections = editingDocType.sections.map(s => 
+          s.name === updatedSection.name ? updatedSection : s
+        );
+        await setupAPI.updateDocumentType(editingDocType.id, { sections: updatedSections });
+        await loadDocumentTypes();
+      }
+    } catch (error) {
+      console.error('Error saving section rules:', error);
+      alert('Error saving section rules');
+    }
+  };
+
+  const handleRefreshDocumentTypes = async () => {
+    await loadDocumentTypes();
+  };
+
+  const filteredDocumentTypes = documentTypes.filter(docType =>
+    docType.name.toLowerCase().includes(setupSearchTerm.toLowerCase()) ||
+    docType.code.toLowerCase().includes(setupSearchTerm.toLowerCase()) ||
+    (docType.description && docType.description.toLowerCase().includes(setupSearchTerm.toLowerCase()))
+  );
+
   if (isLoading) {
   return (
       <div className="min-h-screen flex items-center justify-center">
@@ -354,6 +459,17 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
                 <MessageSquare className="w-5 h-5" />
                 <span>Analysis</span>
               </button>
+              <button
+                onClick={() => setActiveTab("setup")}
+                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "setup"
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                <Settings className="w-5 h-5" />
+                <span>Setup</span>
+              </button>
             </div>
           </div>
 
@@ -376,6 +492,10 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       <p className="font-medium mb-1">Analysis</p>
                       <p className="text-xs">Chat with AI assistant for compliance analysis and file uploads.</p>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="font-medium mb-1">Setup</p>
+                      <p className="text-xs">Configure document types, sections, and validation rules.</p>
                     </div>
                   </div>
                 </CardContent>
@@ -627,6 +747,163 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
                 </div>
               </div>
             </div>
+          ) : activeTab === "setup" ? (
+            // Setup Tab - Document Types Data Table
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+              <div className="max-w-7xl mx-auto">
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Document Types Setup</h1>
+                  <p className="text-gray-600 dark:text-gray-400">Manage document type configurations and validation rules</p>
+                </div>
+
+                {/* Header Controls */}
+                <Card className="mb-6">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                      <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                        <div className="relative flex-1 max-w-md">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Input
+                            placeholder="Search document types..."
+                            value={setupSearchTerm}
+                            onChange={(e) => setSetupSearchTerm(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          variant="outline"
+                          onClick={handleRefreshDocumentTypes}
+                          disabled={setupLoading}
+                          className="flex items-center space-x-2"
+                        >
+                          <Clock className="w-4 h-4" />
+                          <span>Refresh</span>
+                        </Button>
+                        <Button
+                          onClick={handleCreateDocumentType}
+                          className="flex items-center space-x-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Add Document Type</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Data Table */}
+                <Card>
+                  <CardContent className="p-0">
+                    {setupLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                          <span>Loading document types...</span>
+                        </div>
+                      </div>
+                    ) : filteredDocumentTypes.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg font-medium mb-2">
+                          {setupSearchTerm ? 'No matching document types found' : 'No document types configured'}
+                        </p>
+                        <p className="text-sm mb-4">
+                          {setupSearchTerm ? 'Try adjusting your search terms' : 'Create your first document type to get started'}
+                        </p>
+                        {!setupSearchTerm && (
+                          <Button onClick={handleCreateDocumentType} className="flex items-center space-x-2">
+                            <Plus className="w-4 h-4" />
+                            <span>Create Document Type</span>
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <tr>
+                              <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Document Name</th>
+                              <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Document Type</th>
+                              <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Sections</th>
+                              <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Created At</th>
+                              <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Created By</th>
+                              <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Updated At</th>
+                              <th className="text-left py-4 px-6 font-semibold text-gray-900 dark:text-white">Updated By</th>
+                              <th className="text-right py-4 px-6 font-semibold text-gray-900 dark:text-white">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {filteredDocumentTypes.map((docType) => (
+                              <tr key={docType.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <td className="py-4 px-6">
+                                  <div>
+                                    <div className="font-medium text-gray-900 dark:text-white">{docType.name}</div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      {docType.description || 'No description'}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    {docType.code}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-900 dark:text-white">
+                                      {docType.sections?.length || 0}
+                                    </span>
+                                    {docType.sections?.some(s => s.is_required) && (
+                                      <span className="text-xs text-red-600 dark:text-red-400">
+                                        ({docType.sections.filter(s => s.is_required).length} required)
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
+                                  {new Date(docType.created_at).toLocaleDateString()}
+                                </td>
+                                <td className="py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
+                                  {docType.created_by || 'System'}
+                                </td>
+                                <td className="py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
+                                  {new Date(docType.updated_at).toLocaleDateString()}
+                                </td>
+                                <td className="py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
+                                  {docType.updated_by || 'System'}
+                                </td>
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center justify-end space-x-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditDocumentType(docType)}
+                                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteDocumentType(docType.id)}
+                                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           ) : (
             // Analysis Tab - Chat Interface (Full Width)
             <div className="flex-1 flex flex-col">
@@ -759,6 +1036,329 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
               </Card>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Setup Modals */}
+      {(showEditModal || showCreateModal) && (
+        <DocumentTypeModal
+          docType={editingDocType}
+          onSave={handleSaveDocumentType}
+          onClose={() => {
+            setShowEditModal(false);
+            setShowCreateModal(false);
+          }}
+          isEdit={showEditModal}
+          onOpenRulesModal={handleOpenRulesModal}
+        />
+      )}
+
+      {/* Section Rules Modal */}
+      <SectionRulesModal
+        isOpen={showRulesModal}
+        onClose={() => setShowRulesModal(false)}
+        docTypeId={editingDocType?.id}
+        section={selectedSection}
+        onSave={handleSaveSectionRules}
+      />
+    </div>
+  );
+}
+
+// Document Type Modal Component
+function DocumentTypeModal({ docType, onSave, onClose, isEdit, onOpenRulesModal }) {
+  const [formData, setFormData] = useState({
+    code: '',
+    name: '',
+    description: '',
+    id_format: '',
+    sections: []
+  });
+  const [activeTab, setActiveTab] = useState('general');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (docType) {
+      setFormData({
+        code: docType.code || '',
+        name: docType.name || '',
+        description: docType.description || '',
+        id_format: docType.id_format || '',
+        sections: docType.sections || []
+      });
+    }
+  }, [docType]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onSave(formData);
+    } catch (error) {
+      console.error('Error saving document type:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddSection = () => {
+    const newSection = {
+      name: '',
+      description: '',
+      order: formData.sections.length,
+      is_required: true,
+      rules: []
+    };
+    setFormData(prev => ({
+      ...prev,
+      sections: [...prev.sections, newSection]
+    }));
+  };
+
+  const handleSectionChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      sections: prev.sections.map((section, i) => 
+        i === index ? { ...section, [field]: value } : section
+      )
+    }));
+  };
+
+  const handleRemoveSection = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      sections: prev.sections.filter((_, i) => i !== index)
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {isEdit ? 'Edit Document Type' : 'Create Document Type'}
+          </h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ×
+          </Button>
+        </div>
+
+        <div className="flex">
+          {/* Sidebar */}
+          <div className="w-64 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+            <div className="p-4 space-y-2">
+              <button
+                onClick={() => setActiveTab('general')}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'general'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                General Settings
+              </button>
+              <button
+                onClick={() => setActiveTab('sections')}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'sections'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                Document Sections
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 p-6 overflow-y-auto">
+            <form onSubmit={handleSubmit}>
+              {activeTab === 'general' && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Document Code *
+                    </label>
+                    <Input
+                      value={formData.code}
+                      onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                      placeholder="e.g., SOP, PROTOCOL, MANUAL"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Document Name *
+                    </label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g., Standard Operating Procedures"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Describe the purpose and scope of this document type..."
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      ID Format
+                    </label>
+                    <Input
+                      value={formData.id_format}
+                      onChange={(e) => setFormData(prev => ({ ...prev, id_format: e.target.value }))}
+                      placeholder="e.g., SOP-###, PROTOCOL-YYYY-###"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Use # for numbers, YYYY for year, etc.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'sections' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      Document Sections
+                    </h3>
+                    <Button
+                      type="button"
+                      onClick={handleAddSection}
+                      className="flex items-center space-x-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Section</span>
+                    </Button>
+                  </div>
+
+                  {formData.sections.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No sections defined yet</p>
+                      <p className="text-sm">Add sections to define the structure of this document type</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {formData.sections
+                        .sort((a, b) => a.order - b.order)
+                        .map((section, index) => (
+                        <Card key={index}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center space-x-3">
+                                <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
+                                <h4 className="font-medium text-gray-900 dark:text-white">
+                                  {section.name || `Section ${index + 1}`}
+                                </h4>
+                                {section.is_required && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    Required
+                                  </span>
+                                )}
+                                {section.rules && section.rules.length > 0 && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    {section.rules.length} rules
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onOpenRulesModal(section)}
+                                  className="text-blue-600 hover:text-blue-700"
+                                >
+                                  <Settings className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveSection(index)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Section Name *
+                                </label>
+                                <Input
+                                  value={section.name}
+                                  onChange={(e) => handleSectionChange(index, 'name', e.target.value)}
+                                  placeholder="e.g., Introduction, Methodology"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Order
+                                </label>
+                                <Input
+                                  type="number"
+                                  value={section.order}
+                                  onChange={(e) => handleSectionChange(index, 'order', parseInt(e.target.value))}
+                                  min="0"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Description
+                                </label>
+                                <textarea
+                                  value={section.description}
+                                  onChange={(e) => handleSectionChange(index, 'description', e.target.value)}
+                                  placeholder="Describe what this section should contain..."
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                  rows={2}
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={section.is_required}
+                                    onChange={(e) => handleSectionChange(index, 'is_required', e.target.checked)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Required section
+                                  </span>
+                                </label>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : (isEdit ? 'Update' : 'Create')}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
