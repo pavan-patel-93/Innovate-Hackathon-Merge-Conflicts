@@ -123,11 +123,6 @@ export function Setup() {
           <span className="text-sm text-gray-900 dark:text-white">
             {row.sections?.length || 0}
           </span>
-          {row.sections?.some(s => s.is_required) && (
-            <span className="text-xs text-red-600 dark:text-red-400">
-              ({row.sections.filter(s => s.is_required).length} required)
-            </span>
-          )}
         </div>
       )
     },

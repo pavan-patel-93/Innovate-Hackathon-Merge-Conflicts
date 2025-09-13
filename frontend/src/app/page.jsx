@@ -855,11 +855,6 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
                                     <span className="text-sm text-gray-900 dark:text-white">
                                       {docType.sections?.length || 0}
                                     </span>
-                                    {docType.sections?.some(s => s.is_required) && (
-                                      <span className="text-xs text-red-600 dark:text-red-400">
-                                        ({docType.sections.filter(s => s.is_required).length} required)
-                                      </span>
-                                    )}
                                   </div>
                                 </td>
                                 <td className="py-4 px-6 text-sm text-gray-500 dark:text-gray-400">
