@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/common/DataTable";
 import { DocumentTypeModal } from "./DocumentTypeModal";
-import { SectionRulesModal } from "./SectionRulesModal";
 import { useSetup } from "@/hooks/useSetup";
 import { useModal } from "@/hooks/useModal";
 import { Plus, Clock, Search } from "lucide-react";
@@ -23,11 +22,9 @@ export function Setup() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [editingDocType, setEditingDocType] = useState(null);
-  const [selectedSection, setSelectedSection] = useState(null);
 
   const createModal = useModal();
   const editModal = useModal();
-  const rulesModal = useModal();
 
   // Load document types when component mounts
   useEffect(() => {
@@ -74,25 +71,6 @@ export function Setup() {
     }
   };
 
-  const handleOpenRulesModal = (section) => {
-    setSelectedSection(section);
-    rulesModal.open();
-  };
-
-  const handleSaveSectionRules = async (updatedSection) => {
-    try {
-      if (editingDocType) {
-        const updatedSections = editingDocType.sections.map(s => 
-          s.name === updatedSection.name ? updatedSection : s
-        );
-        await updateDocumentType(editingDocType.id, { sections: updatedSections });
-        await loadDocumentTypes();
-      }
-    } catch (error) {
-      console.error('Error saving section rules:', error);
-      alert('Error saving section rules');
-    }
-  };
 
   const filteredDocumentTypes = documentTypes.filter(docType =>
     docType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -240,15 +218,6 @@ export function Setup() {
           docType={editingDocType}
           onSave={handleSaveDocumentType}
           isEdit={editModal.isOpen}
-          onOpenRulesModal={handleOpenRulesModal}
-        />
-
-        <SectionRulesModal
-          isOpen={rulesModal.isOpen}
-          onClose={rulesModal.close}
-          docTypeId={editingDocType?.id}
-          section={selectedSection}
-          onSave={handleSaveSectionRules}
         />
       </div>
     </div>

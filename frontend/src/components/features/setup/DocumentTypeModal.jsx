@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { 
   Plus, 
   GripVertical, 
-  Settings, 
   Trash2 
 } from "lucide-react";
 
@@ -17,14 +16,12 @@ export function DocumentTypeModal({
   onClose, 
   docType, 
   onSave, 
-  isEdit, 
-  onOpenRulesModal 
+  isEdit 
 }) {
   const [formData, setFormData] = useState({
     code: '',
     name: '',
     description: '',
-    id_format: '',
     sections: []
   });
   const [activeTab, setActiveTab] = useState('general');
@@ -36,7 +33,6 @@ export function DocumentTypeModal({
         code: docType.code || '',
         name: docType.name || '',
         description: docType.description || '',
-        id_format: docType.id_format || '',
         sections: docType.sections || []
       });
     } else {
@@ -45,7 +41,6 @@ export function DocumentTypeModal({
         code: '',
         name: '',
         description: '',
-        id_format: '',
         sections: []
       });
     }
@@ -90,6 +85,53 @@ export function DocumentTypeModal({
     setFormData(prev => ({
       ...prev,
       sections: prev.sections.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddRule = (sectionIndex) => {
+    const newRule = {
+      rule_id: `custom_${Date.now()}`,
+      name: '',
+      description: '',
+      is_active: true,
+      severity: 'minor',
+      parameters: {}
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      sections: prev.sections.map((section, i) => 
+        i === sectionIndex 
+          ? { ...section, rules: [...(section.rules || []), newRule] }
+          : section
+      )
+    }));
+  };
+
+  const handleUpdateRule = (sectionIndex, ruleIndex, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      sections: prev.sections.map((section, i) => 
+        i === sectionIndex 
+          ? {
+              ...section,
+              rules: section.rules.map((rule, j) => 
+                j === ruleIndex ? { ...rule, [field]: value } : rule
+              )
+            }
+          : section
+      )
+    }));
+  };
+
+  const handleRemoveRule = (sectionIndex, ruleIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      sections: prev.sections.map((section, i) => 
+        i === sectionIndex 
+          ? { ...section, rules: section.rules.filter((_, j) => j !== ruleIndex) }
+          : section
+      )
     }));
   };
 
@@ -167,19 +209,6 @@ export function DocumentTypeModal({
                     rows={3}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    ID Format
-                  </label>
-                  <Input
-                    value={formData.id_format}
-                    onChange={(e) => setFormData(prev => ({ ...prev, id_format: e.target.value }))}
-                    placeholder="e.g., SOP-###, PROTOCOL-YYYY-###"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Use # for numbers, YYYY for year, etc.
-                  </p>
-                </div>
               </div>
             )}
 
@@ -229,15 +258,6 @@ export function DocumentTypeModal({
                               )}
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onOpenRulesModal(section)}
-                                className="text-blue-600 hover:text-blue-700"
-                              >
-                                <Settings className="w-4 h-4" />
-                              </Button>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -297,6 +317,117 @@ export function DocumentTypeModal({
                                 </span>
                               </label>
                             </div>
+                          </div>
+
+                          {/* Section Rules */}
+                          <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h5 className="font-medium text-gray-900 dark:text-white">
+                                Validation Rules
+                              </h5>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAddRule(index)}
+                                className="flex items-center space-x-2"
+                              >
+                                <Plus className="w-4 h-4" />
+                                <span>Add Rule</span>
+                              </Button>
+                            </div>
+
+                            {section.rules && section.rules.length > 0 ? (
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                  <thead className="bg-gray-50 dark:bg-gray-800">
+                                    <tr>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Rule Name
+                                      </th>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Description
+                                      </th>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Severity
+                                      </th>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Status
+                                      </th>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Actions
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                                    {section.rules.map((rule, ruleIndex) => (
+                                      <tr key={ruleIndex} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <td className="px-3 py-2">
+                                          <Input
+                                            value={rule.name}
+                                            onChange={(e) => handleUpdateRule(index, ruleIndex, 'name', e.target.value)}
+                                            placeholder="Rule name"
+                                            className="text-sm border-0 bg-transparent p-1 focus:ring-1 focus:ring-blue-500"
+                                          />
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <Input
+                                            value={rule.description}
+                                            onChange={(e) => handleUpdateRule(index, ruleIndex, 'description', e.target.value)}
+                                            placeholder="Description"
+                                            className="text-sm border-0 bg-transparent p-1 focus:ring-1 focus:ring-blue-500"
+                                          />
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <select
+                                            value={rule.severity}
+                                            onChange={(e) => handleUpdateRule(index, ruleIndex, 'severity', e.target.value)}
+                                            className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+                                          >
+                                            <option value="critical">Critical</option>
+                                            <option value="major">Major</option>
+                                            <option value="minor">Minor</option>
+                                          </select>
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <div className="flex items-center space-x-2">
+                                            <input
+                                              type="checkbox"
+                                              checked={rule.is_active}
+                                              onChange={(e) => handleUpdateRule(index, ruleIndex, 'is_active', e.target.checked)}
+                                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                              rule.is_active 
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                                            }`}>
+                                              {rule.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleRemoveRule(index, ruleIndex)}
+                                            className="text-red-600 hover:text-red-700 p-1"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                                <p className="text-sm">No validation rules added</p>
+                                <p className="text-xs">Click "Add Rule" to create your first rule</p>
+                              </div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>

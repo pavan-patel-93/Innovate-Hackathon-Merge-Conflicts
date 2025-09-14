@@ -91,7 +91,7 @@ export function SectionRulesModal({
       description="Add validation rules for this document section"
       size="lg"
     >
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         {/* Add New Rule */}
         <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
           <h3 className="font-medium text-gray-900 dark:text-white mb-4">Add New Rule</h3>
