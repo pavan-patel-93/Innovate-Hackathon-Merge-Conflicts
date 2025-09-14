@@ -207,25 +207,8 @@ CRITICAL: Include the "compliance_score" field in your response. Calculate it as
                     report += f"  - **Suggestion:** {issue.get('suggestion', 'No suggestion provided')}\n\n"
             else:
                 report += "No issues found for this section.\n\n"
-        
-        # Add scoring breakdown
-        # report += "## Scoring Breakdown\n\n"
-        # report += "- Starting Score: 100 points\n"
-        # report += "- Critical Issues: -20 points each\n"
-        # report += "- Major Issues: -10 points each\n"
-        # report += "- Minor Issues: -5 points each\n\n"
-        
-        # Count issues by severity
-        critical_count = sum(1 for section in sections_analysis for issue in section.get('issues', []) if issue.get('severity') == 'critical')
-        major_count = sum(1 for section in sections_analysis for issue in section.get('issues', []) if issue.get('severity') == 'major')
-        minor_count = sum(1 for section in sections_analysis for issue in section.get('issues', []) if issue.get('severity') == 'minor')
-        
-        if critical_count > 0:
-            report += f"- Critical Issues Found: {critical_count} (-{critical_count * 20} points)\n"
-        if major_count > 0:
-            report += f"- Major Issues Found: {major_count} (-{major_count * 10} points)\n"
-        if minor_count > 0:
-            report += f"- Minor Issues Found: {minor_count} (-{minor_count * 5} points)\n"
+
+
         
         report += f"\n**Final Score: {compliance_score:.1f}/100**\n"
         
