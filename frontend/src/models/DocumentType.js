@@ -29,6 +29,34 @@ const SectionRuleSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+const DocumentRuleSchema = new mongoose.Schema({
+  rule_id: {
+    type: String,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    default: ''
+  },
+  is_active: {
+    type: Boolean,
+    default: true
+  },
+  severity: {
+    type: String,
+    enum: ['critical', 'major', 'minor'],
+    default: 'minor'
+  },
+  parameters: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  }
+}, { _id: false });
+
 const DocumentSectionSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -73,6 +101,7 @@ const DocumentTypeSchema = new mongoose.Schema({
     trim: true
   },
   sections: [DocumentSectionSchema],
+  document_rules: [DocumentRuleSchema],
   created_by: {
     type: String,
     default: 'system'
@@ -88,6 +117,10 @@ const DocumentTypeSchema = new mongoose.Schema({
       ret.id = ret._id.toString();
       ret.created_at = ret.createdAt;
       ret.updated_at = ret.updatedAt;
+      // Ensure document_rules are properly included and defaulted
+      ret.document_rules = ret.document_rules || [];
+      // Ensure sections are properly included and defaulted
+      ret.sections = ret.sections || [];
       delete ret._id;
       delete ret.__v;
       delete ret.createdAt;

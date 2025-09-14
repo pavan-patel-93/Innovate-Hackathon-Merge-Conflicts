@@ -3,28 +3,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, BarChart3, Clock } from "lucide-react";
 
-export function StatsCards({ documents, showOnlyTopStats = false }) {
-  const analyzedCount = documents.filter(d => d.status === 'analyzed').length;
-  const pendingCount = documents.filter(d => d.status === 'uploaded').length;
+export function StatsCards({ documents = [], overviewStats = null, issuesBreakdown = null, showOnlyTopStats = false }) {
+  // Use dashboard stats if available, otherwise fall back to documents array
+  const totalDocuments = overviewStats?.totalDocuments ?? documents.length;
+  const analyzedCount = overviewStats?.documentsAnalyzed ?? documents.filter(d => d.status === 'analyzed').length;
+  const pendingCount = overviewStats?.documentsPending ?? documents.filter(d => d.status === 'uploaded').length;
+  const averageScore = Math.round(overviewStats?.averageComplianceScore ?? (
+    analyzedCount > 0 
+      ? documents
+          .filter(d => d.complianceScore !== undefined)
+          .reduce((sum, doc) => sum + (doc.complianceScore || 0), 0) / analyzedCount
+      : 0
+  ));
   
-  const criticalIssues = documents.reduce((sum, doc) => 
+  const criticalIssues = issuesBreakdown?.critical ?? documents.reduce((sum, doc) => 
     sum + (doc.issues?.filter(issue => issue.type === 'critical').length || 0), 0
   );
   
-  const majorIssues = documents.reduce((sum, doc) => 
+  const majorIssues = issuesBreakdown?.major ?? documents.reduce((sum, doc) => 
     sum + (doc.issues?.filter(issue => issue.type === 'major').length || 0), 0
   );
   
-  const minorIssues = documents.reduce((sum, doc) => 
+  const minorIssues = issuesBreakdown?.minor ?? documents.reduce((sum, doc) => 
     sum + (doc.issues?.filter(issue => issue.type === 'minor').length || 0), 0
   );
-
-  const averageScore = analyzedCount > 0 
-    ? Math.round(documents
-        .filter(d => d.complianceScore !== undefined)
-        .reduce((sum, doc) => sum + (doc.complianceScore || 0), 0) / analyzedCount
-      )
-    : 0;
 
   const getScoreColor = (score) => {
     if (score >= 80) return "text-blue-600 dark:text-blue-400";
@@ -52,7 +54,7 @@ export function StatsCards({ documents, showOnlyTopStats = false }) {
           <CardContent>
             <div className="text-center">
               <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                {documents.length}
+                {totalDocuments}
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Total Documents
@@ -107,7 +109,7 @@ export function StatsCards({ documents, showOnlyTopStats = false }) {
         <CardContent>
           <div className="text-center">
             <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-              {documents.length}
+              {totalDocuments}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Total Documents

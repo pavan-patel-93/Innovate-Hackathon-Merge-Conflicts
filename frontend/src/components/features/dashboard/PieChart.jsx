@@ -3,46 +3,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart as LucidePieChart } from "lucide-react";
 
-export function PieChart({ documents }) {
-  const analyzedCount = documents.filter(d => d.status === 'analyzed').length;
+export function PieChart({ documents = [], complianceDistribution = null, overviewStats = null }) {
+  const analyzedCount = overviewStats?.documentsAnalyzed ?? documents.filter(d => d.status === 'analyzed').length;
   
-  const criticalIssues = documents.reduce((sum, doc) => 
-    sum + (doc.issues?.filter(issue => issue.type === 'critical').length || 0), 0
-  );
-  
-  const majorIssues = documents.reduce((sum, doc) => 
-    sum + (doc.issues?.filter(issue => issue.type === 'major').length || 0), 0
-  );
-  
-  const minorIssues = documents.reduce((sum, doc) => 
-    sum + (doc.issues?.filter(issue => issue.type === 'minor').length || 0), 0
-  );
+  // Use compliance distribution data if available, otherwise calculate from documents
+  const excellent = complianceDistribution?.excellent ?? documents.filter(d => d.complianceScore >= 80).length;
+  const good = complianceDistribution?.good ?? documents.filter(d => d.complianceScore >= 60 && d.complianceScore < 80).length;
+  const needsWork = complianceDistribution?.needsWork ?? documents.filter(d => d.complianceScore < 60).length;
 
-  const totalIssues = criticalIssues + majorIssues + minorIssues;
+  const totalDocs = excellent + good + needsWork;
 
   // Calculate percentages
-  const criticalPercentage = totalIssues > 0 ? (criticalIssues / totalIssues) * 100 : 0;
-  const majorPercentage = totalIssues > 0 ? (majorIssues / totalIssues) * 100 : 0;
-  const minorPercentage = totalIssues > 0 ? (minorIssues / totalIssues) * 100 : 0;
+  const excellentPercentage = totalDocs > 0 ? (excellent / totalDocs) * 100 : 0;
+  const goodPercentage = totalDocs > 0 ? (good / totalDocs) * 100 : 0;
+  const needsWorkPercentage = totalDocs > 0 ? (needsWork / totalDocs) * 100 : 0;
 
   // SVG pie chart calculations
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
   
-  const criticalStroke = (criticalPercentage / 100) * circumference;
-  const majorStroke = (majorPercentage / 100) * circumference;
-  const minorStroke = (minorPercentage / 100) * circumference;
+  const excellentStroke = (excellentPercentage / 100) * circumference;
+  const goodStroke = (goodPercentage / 100) * circumference;
+  const needsWorkStroke = (needsWorkPercentage / 100) * circumference;
 
-  const criticalOffset = 0;
-  const majorOffset = criticalStroke;
-  const minorOffset = criticalStroke + majorStroke;
+  const excellentOffset = 0;
+  const goodOffset = excellentStroke;
+  const needsWorkOffset = excellentStroke + goodStroke;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <LucidePieChart className="w-5 h-5" />
-          <span>Issues Distribution</span>
+          <span>Compliance Distribution</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -61,25 +54,25 @@ export function PieChart({ documents }) {
                 className="dark:stroke-gray-700"
               />
               
-              {totalIssues > 0 && (
+              {totalDocs > 0 && (
                 <>
-                  {/* Critical issues */}
-                  {criticalIssues > 0 && (
+                  {/* Excellent compliance */}
+                  {excellent > 0 && (
                     <circle
                       cx="70"
                       cy="70"
                       r={radius}
                       fill="none"
-                      stroke="#dc2626"
+                      stroke="#16a34a"
                       strokeWidth="8"
-                      strokeDasharray={`${criticalStroke} ${circumference - criticalStroke}`}
-                      strokeDashoffset={-criticalOffset}
+                      strokeDasharray={`${excellentStroke} ${circumference - excellentStroke}`}
+                      strokeDashoffset={-excellentOffset}
                       strokeLinecap="round"
                     />
                   )}
                   
-                  {/* Major issues */}
-                  {majorIssues > 0 && (
+                  {/* Good compliance */}
+                  {good > 0 && (
                     <circle
                       cx="70"
                       cy="70"
@@ -87,23 +80,23 @@ export function PieChart({ documents }) {
                       fill="none"
                       stroke="#d97706"
                       strokeWidth="8"
-                      strokeDasharray={`${majorStroke} ${circumference - majorStroke}`}
-                      strokeDashoffset={-majorOffset}
+                      strokeDasharray={`${goodStroke} ${circumference - goodStroke}`}
+                      strokeDashoffset={-goodOffset}
                       strokeLinecap="round"
                     />
                   )}
                   
-                  {/* Minor issues */}
-                  {minorIssues > 0 && (
+                  {/* Needs work */}
+                  {needsWork > 0 && (
                     <circle
                       cx="70"
                       cy="70"
                       r={radius}
                       fill="none"
-                      stroke="#2563eb"
+                      stroke="#dc2626"
                       strokeWidth="8"
-                      strokeDasharray={`${minorStroke} ${circumference - minorStroke}`}
-                      strokeDashoffset={-minorOffset}
+                      strokeDasharray={`${needsWorkStroke} ${circumference - needsWorkStroke}`}
+                      strokeDashoffset={-needsWorkOffset}
                       strokeLinecap="round"
                     />
                   )}
@@ -114,10 +107,10 @@ export function PieChart({ documents }) {
             {/* Center text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totalIssues}
+                {totalDocs}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                Total Issues
+                Documents
               </div>
             </div>
           </div>
@@ -126,26 +119,26 @@ export function PieChart({ documents }) {
           <div className="w-full space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-600"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Critical</span>
+                <div className="w-3 h-3 rounded-full bg-green-600"></div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Excellent (≥80%)</span>
               </div>
-              <span className="text-sm font-medium text-red-600">{criticalIssues}</span>
+              <span className="text-sm font-medium text-green-600">{excellent}</span>
             </div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 rounded-full bg-yellow-600"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Major</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Good (60-79%)</span>
               </div>
-              <span className="text-sm font-medium text-yellow-600">{majorIssues}</span>
+              <span className="text-sm font-medium text-yellow-600">{good}</span>
             </div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Minor</span>
+                <div className="w-3 h-3 rounded-full bg-red-600"></div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Needs Work (<60%)</span>
               </div>
-              <span className="text-sm font-medium text-blue-600">{minorIssues}</span>
+              <span className="text-sm font-medium text-red-600">{needsWork}</span>
             </div>
           </div>
 

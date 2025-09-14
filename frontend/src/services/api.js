@@ -131,6 +131,26 @@ export const documentAPI = {
       throw error;
     }
   },
+  getUserDocuments: async (userId) => {
+    try {
+      const response = await fetch('/api/documents', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for session-based auth
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching user documents:', error);
+      throw error;
+    }
+  },
 
   // Delete a document
   deleteDocument: async (documentId) => {

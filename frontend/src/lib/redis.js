@@ -38,13 +38,18 @@ class RedisClient {
       });
     }
 
-    if (!this.isReady) {
+    if (!this.isReady && !this.client.isOpen) {
       try {
         await this.client.connect();
         this.isReady = true;
       } catch (err) {
         console.error('Failed to connect to Redis:', err);
-        throw err;
+        // If connection fails due to socket already opened, mark as ready
+        if (err.message.includes('Socket already opened')) {
+          this.isReady = true;
+        } else {
+          throw err;
+        }
       }
     }
 

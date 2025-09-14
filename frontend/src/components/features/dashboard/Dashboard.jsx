@@ -1,14 +1,43 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DocumentList } from "./DocumentList";
+import { DocumentHistoryTable } from "./DocumentHistoryTable";
 import { StatsCards } from "./StatsCards";
-import { PieChart } from "./PieChart";
 import { useDocuments } from "@/hooks/useDocuments";
+import { useDashboard } from "@/hooks/useDashboard";
 import { FileCheck } from "lucide-react";
+import { useEffect } from 'react';
 
 export function Dashboard() {
   const { documents, loadDocuments, analyzeDocument, isAnalyzing } = useDocuments();
+  const { 
+    dashboardData, 
+    loading, 
+    error, 
+    refreshDashboard,
+    getOverviewStats,
+    getComplianceData,
+    getCriticalIssues,
+    getRecentDocuments
+  } = useDashboard();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[Dashboard] Component state:', {
+      loading,
+      error,
+      hasStats: !!dashboardData.stats,
+      hasTrends: !!dashboardData.trends,
+      hasCriticalIssues: !!dashboardData.criticalIssues,
+      overviewStats: getOverviewStats(),
+      complianceData: getComplianceData()
+    });
+  }, [dashboardData, loading, error, getOverviewStats, getComplianceData]);
+
+  // Get dashboard data
+  const overviewStats = getOverviewStats();
+  const complianceDistribution = getComplianceData();
+  const recentDocuments = getRecentDocuments() || [];
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
@@ -22,40 +51,39 @@ export function Dashboard() {
           </p>
         </div>
 
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-gray-500 dark:text-gray-400">Loading dashboard data...</div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+            <div className="text-red-700 dark:text-red-300">Error loading dashboard: {error}</div>
+            <button 
+              onClick={refreshDashboard}
+              className="mt-2 text-sm text-red-600 dark:text-red-400 hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         <div className="space-y-6">
           {/* Top Stats Row - Document Count and Overall Score */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <StatsCards documents={documents} showOnlyTopStats={true} />
+            <StatsCards 
+              documents={documents} 
+              overviewStats={overviewStats}
+              showOnlyTopStats={true} 
+            />
           </div>
 
-          {/* Pie Chart and History Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Pie Chart */}
-            <div className="lg:col-span-1">
-              <PieChart documents={documents} />
-            </div>
-
-            {/* Document History */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <FileCheck className="w-5 h-5" />
-                    <span>Document History</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Review compliance analysis results for your uploaded documents
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <DocumentList
-                    documents={documents}
-                    onAnalyze={analyzeDocument}
-                    isAnalyzing={isAnalyzing}
-                  />
-                </CardContent>
-              </Card>
-            </div>
+          {/* Document History */}
+          <div className="w-full">
+            <DocumentHistoryTable
+              documents={recentDocuments.length > 0 ? recentDocuments : documents}
+            />
           </div>
         </div>
       </div>

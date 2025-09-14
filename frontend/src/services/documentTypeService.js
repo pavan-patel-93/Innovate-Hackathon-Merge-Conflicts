@@ -9,13 +9,24 @@ export class DocumentTypeService {
     try {
       await connectToDatabase();
       
-      const documentType = new DocumentType({
+      console.log('Creating document type with data:', documentTypeData);
+      console.log('Document rules in service:', documentTypeData.document_rules);
+      
+      // Ensure document_rules is properly initialized
+      const processedData = {
         ...documentTypeData,
+        document_rules: documentTypeData.document_rules || [],
+        sections: documentTypeData.sections || [],
         created_by: createdBy,
         updated_by: createdBy
-      });
+      };
+      
+      console.log('Processed data for creation:', processedData);
+      
+      const documentType = new DocumentType(processedData);
       
       const savedDocumentType = await documentType.save();
+      console.log('Saved document type:', savedDocumentType.toJSON());
       return savedDocumentType.toJSON();
     } catch (error) {
       console.error('Error creating document type:', error);
@@ -42,7 +53,8 @@ export class DocumentTypeService {
         ...docType,
         id: docType._id.toString(),
         created_at: docType.createdAt,
-        updated_at: docType.updatedAt
+        updated_at: docType.updatedAt,
+        document_rules: docType.document_rules || []
       }));
     } catch (error) {
       console.error('Error fetching document types:', error);
@@ -64,7 +76,8 @@ export class DocumentTypeService {
         ...documentType,
         id: documentType._id.toString(),
         created_at: documentType.createdAt,
-        updated_at: documentType.updatedAt
+        updated_at: documentType.updatedAt,
+        document_rules: documentType.document_rules || []
       };
     } catch (error) {
       console.error('Error fetching document type by ID:', error);
@@ -89,7 +102,8 @@ export class DocumentTypeService {
         ...documentType,
         id: documentType._id.toString(),
         created_at: documentType.createdAt,
-        updated_at: documentType.updatedAt
+        updated_at: documentType.updatedAt,
+        document_rules: documentType.document_rules || []
       };
     } catch (error) {
       console.error('Error fetching document type by code:', error);
@@ -102,15 +116,34 @@ export class DocumentTypeService {
     try {
       await connectToDatabase();
       
+      console.log('Updating document type with data:', updateData);
+      console.log('Document rules in update:', updateData.document_rules);
+      
+      // Ensure document_rules and sections are properly handled in updates
+      const processedUpdateData = {
+        ...updateData,
+        updated_by: updatedBy
+      };
+      
+      // Explicitly handle document_rules if provided
+      if (updateData.document_rules !== undefined) {
+        processedUpdateData.document_rules = updateData.document_rules;
+      }
+      
+      // Explicitly handle sections if provided
+      if (updateData.sections !== undefined) {
+        processedUpdateData.sections = updateData.sections;
+      }
+      
+      console.log('Processed update data:', processedUpdateData);
+      
       const documentType = await DocumentType.findByIdAndUpdate(
         id,
-        {
-          ...updateData,
-          updated_by: updatedBy
-        },
+        processedUpdateData,
         { 
           new: true,
-          runValidators: true
+          upsert: true,
+          runValidators: true,
         }
       );
       
@@ -118,6 +151,7 @@ export class DocumentTypeService {
         throw new Error('Document type not found');
       }
       
+      console.log('Updated document type:', documentType.toJSON());
       return documentType.toJSON();
     } catch (error) {
       console.error('Error updating document type:', error);

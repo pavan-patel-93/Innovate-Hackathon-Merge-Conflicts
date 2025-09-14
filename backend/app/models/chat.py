@@ -61,6 +61,7 @@ class DocumentTypeBase(BaseModel):
 class DocumentTypeCreate(DocumentTypeBase):
     """Document type creation schema"""
     sections: List[DocumentSection] = Field(default_factory=list)
+    document_rules: List[SectionRule] = Field(default_factory=list)
 
 class DocumentTypeUpdate(BaseModel):
     """Document type update schema"""
@@ -68,11 +69,13 @@ class DocumentTypeUpdate(BaseModel):
     description: Optional[str] = None
     id_format: Optional[str] = None
     sections: Optional[List[DocumentSection]] = None
+    document_rules: Optional[List[SectionRule]] = None
 
 class DocumentTypeInDB(DocumentTypeBase):
     """Document type in database"""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     sections: List[DocumentSection] = Field(default_factory=list)
+    document_rules: List[SectionRule] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     created_by: Optional[str] = None

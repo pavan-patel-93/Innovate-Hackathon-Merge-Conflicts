@@ -19,7 +19,7 @@ class AIService(BaseService[None]):
     
     def __init__(self):
         super().__init__()
-        self.azure_openai_key = os.getenv("AZURE_OPEN_AI_KEY")
+        self.azure_openai_key = os.getenv("AZURE_OPENAI_KEY")
         self.azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         self.lamaparse_api_key = os.getenv("LAMAPARSE_API_KEY")
     

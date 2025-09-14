@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import dashboardService from '@/services/dashboardService';
 import { 
   Shield, 
   LogOut, 
@@ -22,7 +23,9 @@ import {
   Download,
   Eye,
   Clock,
-  Users
+  Users,
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -31,26 +34,56 @@ export default function DashboardPage() {
   const [complianceScore, setComplianceScore] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [criticalIssues, setCriticalIssues] = useState([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [statsError, setStatsError] = useState(null);
   
   const router = useRouter();
   const { user, isLoading, logout } = useUser({ redirectIfNotFound: true });
 
-  // Fetch user data from API when component mounts
+  // Fetch dashboard data when component mounts
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data.user);
-        }
+        setIsLoadingStats(true);
+        setStatsError(null);
+        
+        // Fetch dashboard stats
+        const stats = await dashboardService.getDashboardStats();
+        setDashboardStats(stats);
+        setUserData(stats.user_info);
+        
+        // Set overall compliance score from stats
+        setComplianceScore(stats.overview.average_compliance_score || 0);
+        
+        // Set recent documents as uploaded files for compatibility
+        const recentDocs = stats.recent_documents.map(doc => ({
+          id: doc.id,
+          name: doc.filename,
+          size: 0, // Not available from backend
+          type: 'application/pdf', // Default type
+          uploadDate: new Date(doc.created_at),
+          status: doc.status === 'analyzed' ? 'analyzed' : 'uploaded',
+          complianceScore: doc.compliance_score,
+          issues: [] // Will be populated if needed
+        }));
+        setUploadedFiles(recentDocs);
+        
+        // Fetch critical issues
+        const criticalData = await dashboardService.getCriticalIssues(10);
+        setCriticalIssues(criticalData.critical_documents || []);
+        
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching dashboard data:', error);
+        setStatsError('Failed to load dashboard data');
+      } finally {
+        setIsLoadingStats(false);
       }
     };
 
     if (user && !isLoading) {
-      fetchUserData();
+      fetchDashboardData();
     }
   }, [user, isLoading]);
 
@@ -318,28 +351,41 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center">
-                    <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full text-3xl font-bold ${getScoreBgColor(complianceScore)} ${getScoreColor(complianceScore)}`}>
-                      {complianceScore}
+                  {isLoadingStats ? (
+                    <div className="text-center py-8">
+                      <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                      <p className="text-sm text-gray-500 mt-2">Loading stats...</p>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      Compliance Score
-                    </p>
-                    <div className="mt-4 space-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-blue-600 dark:text-blue-400">Excellent (80-100)</span>
-                        <span className="text-gray-500">0 docs</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-yellow-600">Good (60-79)</span>
-                        <span className="text-gray-500">0 docs</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-red-600">Needs Work (0-59)</span>
-                        <span className="text-gray-500">0 docs</span>
-                      </div>
+                  ) : statsError ? (
+                    <div className="text-center py-8 text-red-500">
+                      <p className="text-sm">{statsError}</p>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full text-3xl font-bold ${getScoreBgColor(complianceScore)} ${getScoreColor(complianceScore)}`}>
+                        {Math.round(complianceScore)}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        Average Compliance Score
+                      </p>
+                      {dashboardStats && (
+                        <div className="mt-4 space-y-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-blue-600 dark:text-blue-400">Excellent (80-100)</span>
+                            <span className="text-gray-500">{dashboardStats.compliance_distribution.excellent} docs</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-yellow-600">Good (60-79)</span>
+                            <span className="text-gray-500">{dashboardStats.compliance_distribution.good} docs</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-red-600">Needs Work (0-59)</span>
+                            <span className="text-gray-500">{dashboardStats.compliance_distribution.needs_work} docs</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -352,36 +398,65 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Documents Analyzed</span>
-                      <span className="font-medium">{uploadedFiles.filter(f => f.status === 'analyzed').length}</span>
+                  {isLoadingStats ? (
+                    <div className="text-center py-4">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Critical Issues</span>
-                      <span className="font-medium text-red-600">
-                        {uploadedFiles.reduce((sum, file) => 
-                          sum + (file.issues?.filter(issue => issue.type === 'critical')?.length || 0), 0
-                        )}
-                      </span>
+                  ) : dashboardStats ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Documents Analyzed</span>
+                        <span className="font-medium">{dashboardStats.overview.documents_analyzed}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Total Documents</span>
+                        <span className="font-medium">{dashboardStats.overview.total_documents}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Critical Issues</span>
+                        <span className="font-medium text-red-600">{dashboardStats.issues_breakdown.critical}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Major Issues</span>
+                        <span className="font-medium text-yellow-600">{dashboardStats.issues_breakdown.major}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Minor Issues</span>
+                        <span className="font-medium text-blue-600">{dashboardStats.issues_breakdown.minor}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Major Issues</span>
-                      <span className="font-medium text-yellow-600">
-                        {uploadedFiles.reduce((sum, file) => 
-                          sum + (file.issues?.filter(issue => issue.type === 'major')?.length || 0), 0
-                        )}
-                      </span>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Documents Analyzed</span>
+                        <span className="font-medium">{uploadedFiles.filter(f => f.status === 'analyzed').length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Critical Issues</span>
+                        <span className="font-medium text-red-600">
+                          {uploadedFiles.reduce((sum, file) => 
+                            sum + (file.issues?.filter(issue => issue.type === 'critical')?.length || 0), 0
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Major Issues</span>
+                        <span className="font-medium text-yellow-600">
+                          {uploadedFiles.reduce((sum, file) => 
+                            sum + (file.issues?.filter(issue => issue.type === 'major')?.length || 0), 0
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Minor Issues</span>
+                        <span className="font-medium text-blue-600">
+                          {uploadedFiles.reduce((sum, file) => 
+                            sum + (file.issues?.filter(issue => issue.type === 'minor')?.length || 0), 0
+                          )}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Minor Issues</span>
-                      <span className="font-medium text-blue-600">
-                        {uploadedFiles.reduce((sum, file) => 
-                          sum + (file.issues?.filter(issue => issue.type === 'minor')?.length || 0), 0
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 

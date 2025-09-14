@@ -24,7 +24,8 @@ export function DocumentTypeModal({
     code: '',
     name: '',
     description: '',
-    sections: []
+    sections: [],
+    document_rules: []
   });
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,8 @@ export function DocumentTypeModal({
         code: docType.code || '',
         name: docType.name || '',
         description: docType.description || '',
-        sections: docType.sections || []
+        sections: docType.sections || [],
+        document_rules: docType.document_rules || []
       });
       // Expand all sections when editing existing document type
       setExpandedSections(new Set(docType.sections?.map((_, index) => index) || []));
@@ -46,7 +48,8 @@ export function DocumentTypeModal({
         code: '',
         name: '',
         description: '',
-        sections: []
+        sections: [],
+        document_rules: []
       });
       setExpandedSections(new Set());
     }
@@ -56,6 +59,8 @@ export function DocumentTypeModal({
     e.preventDefault();
     setLoading(true);
     try {
+      console.log('Submitting form data:', formData);
+      console.log('Document rules:', formData.document_rules);
       await onSave(formData);
     } catch (error) {
       console.error('Error saving document type:', error);
@@ -167,9 +172,43 @@ export function DocumentTypeModal({
       ...prev,
       sections: prev.sections.map((section, i) => 
         i === sectionIndex 
-          ? { ...section, rules: section.rules.filter((_, j) => j !== ruleIndex) }
+          ? { 
+              ...section, 
+              rules: section.rules.filter((_, j) => j !== ruleIndex) 
+            }
           : section
       )
+    }));
+  };
+
+  const handleAddDocumentRule = () => {
+    const newRule = {
+      rule_id: `custom_${Date.now()}`,
+      name: '',
+      description: '',
+      is_active: true,
+      severity: 'minor'
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      document_rules: [...prev.document_rules, newRule]
+    }));
+  };
+
+  const handleDocumentRuleChange = (ruleIndex, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      document_rules: prev.document_rules.map((rule, i) => 
+        i === ruleIndex ? { ...rule, [field]: value } : rule
+      )
+    }));
+  };
+
+  const handleRemoveDocumentRule = (ruleIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      document_rules: prev.document_rules.filter((_, i) => i !== ruleIndex)
     }));
   };
 
@@ -204,6 +243,16 @@ export function DocumentTypeModal({
               }`}
             >
               Document Sections
+            </button>
+            <button
+              onClick={() => setActiveTab('rules')}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'rules'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Document Rules
             </button>
           </div>
         </div>
@@ -488,6 +537,119 @@ export function DocumentTypeModal({
                         </CardContent>
                       </Card>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'rules' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    Document Rules
+                  </h3>
+                  <Button
+                    type="button"
+                    onClick={handleAddDocumentRule}
+                    className="flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Rule</span>
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Define validation rules that apply to the entire document
+                </p>
+
+                {formData.document_rules.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <p>No document rules defined yet</p>
+                    <p className="text-sm">Add rules to validate the entire document structure and content</p>
+                  </div>
+                ) : (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Rule Name
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Description
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Severity
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                        {formData.document_rules.map((rule, ruleIndex) => (
+                          <tr key={ruleIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-4 py-3">
+                              <Input
+                                value={rule.name}
+                                onChange={(e) => handleDocumentRuleChange(ruleIndex, 'name', e.target.value)}
+                                placeholder="Rule name"
+                                className="border-0 bg-transparent p-0 focus:ring-0"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <Input
+                                value={rule.description}
+                                onChange={(e) => handleDocumentRuleChange(ruleIndex, 'description', e.target.value)}
+                                placeholder="Rule description"
+                                className="border-0 bg-transparent p-0 focus:ring-0"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <select
+                                value={rule.severity}
+                                onChange={(e) => handleDocumentRuleChange(ruleIndex, 'severity', e.target.value)}
+                                className="border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                              >
+                                <option value="critical">Critical</option>
+                                <option value="major">Major</option>
+                                <option value="minor">Minor</option>
+                              </select>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={rule.is_active}
+                                  onChange={(e) => handleDocumentRuleChange(ruleIndex, 'is_active', e.target.checked)}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  rule.is_active
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                                }`}>
+                                  {rule.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveDocumentRule(ruleIndex)}
+                                className="text-red-600 hover:text-red-700 p-1"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
