@@ -152,10 +152,11 @@ export const aiChatAPI = {
       console.log('[AI API] Sending message:', message);
       console.log('[AI API] Files to send:', files.length, files.map(f => f.name || f.filename || 'unknown'));
       
+      let uploadResults = [];
+      let aiResponse = null;
+      
       // If files are provided, upload them one by one
       if (files.length > 0) {
-        const uploadResults = [];
-        
         for (const file of files) {
           const formData = new FormData();
           formData.append('file', file);
@@ -170,20 +171,29 @@ export const aiChatAPI = {
           
           uploadResults.push(response.data);
         }
-        
-        return {
-          message: message,
-          uploads: uploadResults,
-          status: 'success'
-        };
-      } else {
-        // If no files, just return the message
-        return {
-          message: message,
-          uploads: [],
-          status: 'success'
-        };
       }
+      
+      // Always save the chat interaction to database for persistence
+      const chatFormData = new FormData();
+      chatFormData.append('message', message);
+      files.forEach(file => {
+        chatFormData.append('files', file);
+      });
+      
+      const chatResponse = await api.post('/api/v1/ai/chat', chatFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      aiResponse = chatResponse.data;
+      
+      return {
+        message: message,
+        response: aiResponse.response,
+        uploads: uploadResults,
+        status: 'success'
+      };
     } catch (error) {
       console.error('Error sending AI message:', error);
       throw error;
@@ -197,6 +207,17 @@ export const aiChatAPI = {
       return response.data;
     } catch (error) {
       console.error('Error fetching chat history:', error);
+      throw error;
+    }
+  },
+
+  // Get chat messages (alias for getChatHistory for compatibility)
+  getChatMessages: async (userId = 'default') => {
+    try {
+      const response = await api.get(`/api/v1/ai/chat/history/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
       throw error;
     }
   }

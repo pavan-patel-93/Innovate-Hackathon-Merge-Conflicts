@@ -108,34 +108,23 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
         setIsLoading(true);
         const response = await aiChatAPI.getChatMessages();
         
-        if (response.messages && response.messages.length > 0) {
+        if (response.chats && response.chats.length > 0) {
           // Convert database messages to frontend format
-          const formattedMessages = response.messages.reverse().map(msg => ({
-            id: msg._id || msg.id,
-            type: 'user',
-            content: msg.message,
-            timestamp: new Date(msg.created_at || msg.timestamp)
-          })).concat(response.messages.reverse().map(msg => ({
-            id: (msg._id || msg.id) + '_response',
-            type: 'bot',
-            content: msg.response,
-            timestamp: new Date(msg.created_at || msg.timestamp)
-          })));
-          
-          // Flatten and sort by timestamp
           const allMessages = [];
-          response.messages.reverse().forEach(msg => {
+          response.chats.reverse().forEach(chat => {
+            // Add user message
             allMessages.push({
-              id: msg._id || msg.id,
+              id: chat._id || chat.chat_id,
               type: 'user',
-              content: msg.message,
-              timestamp: new Date(msg.created_at || msg.timestamp)
+              content: chat.message,
+              timestamp: new Date(chat.created_at)
             });
+            // Add bot response
             allMessages.push({
-              id: (msg._id || msg.id) + '_response',
+              id: (chat._id || chat.chat_id) + '_response',
               type: 'bot',
-              content: msg.response,
-              timestamp: new Date(msg.created_at || msg.timestamp)
+              content: chat.response,
+              timestamp: new Date(chat.created_at)
             });
           });
           
