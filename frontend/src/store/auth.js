@@ -9,27 +9,32 @@ export const useAuthStore = create((set, get) => ({
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     try {
-      // Simple demo authentication - accept any username/password
-      if (!credentials.username || !credentials.password) {
-        throw new Error('Username and password are required');
+      // Make actual API call to authenticate user
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+        credentials: 'include' // Include cookies for session-based auth
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
       }
 
-      const user = {
-        id: Date.now().toString(),
-        username: credentials.username,
-        email: credentials.email || `${credentials.username}@example.com`,
-        role: 'compliance_analyst',
-        department: 'Quality Assurance',
-        createdAt: new Date().toISOString()
-      };
+      const data = await response.json();
+      const { user, token } = data;
+
+      console.log('Login - API response data:', data);
+      console.log('Login - User object:', user);
+      console.log('Login - User role:', user?.role);
 
       // Store in localStorage for persistence
-      localStorage.setItem('compliance_user', JSON.stringify(user));
-      localStorage.setItem('compliance_token', 'demo_token_' + Date.now());
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('compliance_token', token);
 
       set({ 
         user, 
@@ -37,7 +42,7 @@ export const useAuthStore = create((set, get) => ({
         isLoading: false 
       });
       
-      return { user, token: 'demo_token' };
+      return { user, token };
     } catch (error) {
       set({ 
         error: error.message || 'Login failed', 
@@ -50,31 +55,27 @@ export const useAuthStore = create((set, get) => ({
   register: async (userData) => {
     set({ isLoading: true, error: null });
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     try {
-        console.log("User Data ::::: ", userData)
-      if (!userData.username || !userData.password) {
-        throw new Error('Username and password are required');
+      // Make actual API call to register user
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
 
-      if (userData.password !== userData.confirmPassword) {
-        throw new Error('Passwords do not match');
-      }
-
-      const user = {
-        id: Date.now().toString(),
-        username: userData.username,
-        email: userData.email,
-        role: 'compliance_analyst',
-        department: 'Quality Assurance',
-        createdAt: new Date().toISOString()
-      };
+      const data = await response.json();
+      const { user, token } = data;
 
       // Store in localStorage for persistence
-      localStorage.setItem('compliance_user', JSON.stringify(user));
-      localStorage.setItem('compliance_token', 'demo_token_' + Date.now());
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('compliance_token', token);
 
       set({ 
         user, 
@@ -82,7 +83,7 @@ export const useAuthStore = create((set, get) => ({
         isLoading: false 
       });
       
-      return { user, token: 'demo_token' };
+      return { user, token };
     } catch (error) {
       set({ 
         error: error.message || 'Registration failed', 
@@ -100,7 +101,7 @@ export const useAuthStore = create((set, get) => ({
     
     try {
       // Clear localStorage
-      localStorage.removeItem('compliance_user');
+      localStorage.removeItem('user');
       localStorage.removeItem('compliance_token');
     } finally {
       set({ 
@@ -114,21 +115,46 @@ export const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     set({ isLoading: true });
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
     try {
-      const storedUser = localStorage.getItem('compliance_user');
-      const storedToken = localStorage.getItem('compliance_token');
+      // Always check with the API first since we use session-based auth
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include' // Include cookies for session-based auth
+      });
       
-      if (storedUser && storedToken) {
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          console.log('Loaded user from API:', data.user); // Debug log
+          // Store in localStorage for quick access, but API is source of truth
+          localStorage.setItem('user', JSON.stringify(data.user));
+          set({ user: data.user, isAuthenticated: true, isLoading: false });
+          return;
+        }
+      }
+      
+      // If API check fails, try localStorage as fallback
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
         const user = JSON.parse(storedUser);
+        console.log('Loaded user from localStorage as fallback:', user);
         set({ user, isAuthenticated: true, isLoading: false });
       } else {
         set({ user: null, isAuthenticated: false, isLoading: false });
       }
     } catch (error) {
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      console.error('Auth check error:', error);
+      // Try localStorage as fallback
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          set({ user, isAuthenticated: true, isLoading: false });
+        } else {
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        }
+      } catch (fallbackError) {
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      }
     }
   },
 

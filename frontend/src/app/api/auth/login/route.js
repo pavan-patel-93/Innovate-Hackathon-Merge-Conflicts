@@ -51,6 +51,15 @@ export async function POST(request) {
     // Set the session cookie
     setSessionCookie(sessionId);
 
+    // Debug logging
+    console.log('Login API - Found user:', {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      department: user.department
+    });
+
     // Return success response (without password)
     return NextResponse.json({
       success: true,
@@ -63,6 +72,7 @@ export async function POST(request) {
         department: user.department,
         createdAt: user.createdAt,
       },
+      token: sessionId, // Include the session token
     });
   } catch (error) {
     console.error('Login error:', error);

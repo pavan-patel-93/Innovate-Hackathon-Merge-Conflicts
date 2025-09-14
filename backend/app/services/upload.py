@@ -111,7 +111,7 @@ async def upload_file(file: UploadFile = File(...)):
                     },
                     {
                         "role": "user",
-                        "content": documentText[:8000],  # Limit content length
+                        "content": documentText,  # Limit content length
                     },
                 ],
                 max_tokens=1000,  # Use max_tokens instead of max_completion_tokens

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <div>
+        <h2>Login Test</h2>
+        <input type="text" id="username" placeholder="Username" value="kishan.kadam.cs@ghriet.raisoni.net">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+    
+    <div>
+        <h2>Results</h2>
+        <pre id="results"></pre>
+    </div>
+
+    <script>
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const results = document.getElementById('results');
+            
+            try {
+                console.log('Testing login with:', { username });
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                results.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    // Store in localStorage
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('compliance_token', data.token);
+                    
+                    console.log('Stored user:', data.user);
+                    console.log('User role:', data.user?.role);
+                    console.log('Is admin?', data.user?.role === 'admin');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                results.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
