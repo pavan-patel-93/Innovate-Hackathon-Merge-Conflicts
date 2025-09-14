@@ -3,10 +3,10 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { LoginForm } from '@/components/AuthComponents';
+import { SignupForm } from '@/components/AuthComponents';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { user, isLoading } = useUser();
   
@@ -29,7 +29,7 @@ export default function LoginPage() {
     );
   }
   
-  // Show login form if not authenticated
+  // Show signup form if not authenticated
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       {/* Theme Toggle - Top Right */}
@@ -57,14 +57,14 @@ export default function LoginPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
           <div className="space-y-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create account</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Enter your credentials to access your account
+                Fill in the details to create your account
               </p>
             </div>
             
-            {/* Login Form */}
-            <LoginForm />
+            {/* Signup Form */}
+            <SignupForm />
           </div>
         </div>
       </div>

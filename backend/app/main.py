@@ -26,7 +26,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "Working compilance Backend"
+    }
+
 # Include API router
+# app.include_router(auth_router, prefix="/api/v1/auth")
+
 app.include_router(api_router, prefix="/api/v1")
 
 app.include_router(upload_router, prefix="/api/v1/documents/upload", tags=["upload"])
