@@ -184,15 +184,16 @@ export const aiChatAPI = {
   }
 };
 
-// Setup API functions for document type configuration
+// Setup API functions for document type configuration (using Next.js API routes)
 export const setupAPI = {
   // Get all document types
   getDocumentTypes: async (skip = 0, limit = 100) => {
     try {
-      const response = await api.get('/api/v1/setup/document-types', {
-        params: { skip, limit }
-      });
-      return response.data;
+      const response = await fetch(`/api/setup/document-types?skip=${skip}&limit=${limit}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Error fetching document types:', error);
       throw error;
@@ -202,8 +203,11 @@ export const setupAPI = {
   // Get document type by ID
   getDocumentType: async (docTypeId) => {
     try {
-      const response = await api.get(`/api/v1/setup/document-types/${docTypeId}`);
-      return response.data;
+      const response = await fetch(`/api/setup/document-types/${docTypeId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Error fetching document type:', error);
       throw error;
@@ -213,8 +217,11 @@ export const setupAPI = {
   // Get document type by code
   getDocumentTypeByCode: async (code) => {
     try {
-      const response = await api.get(`/api/v1/setup/document-types/code/${code}`);
-      return response.data;
+      const response = await fetch(`/api/setup/document-types/code/${code}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Error fetching document type by code:', error);
       throw error;
@@ -224,10 +231,23 @@ export const setupAPI = {
   // Create document type
   createDocumentType: async (documentType, createdBy = null) => {
     try {
-      const response = await api.post('/api/v1/setup/document-types', documentType, {
-        params: createdBy ? { created_by: createdBy } : {}
+      const response = await fetch('/api/setup/document-types', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...documentType,
+          created_by: createdBy
+        }),
       });
-      return response.data;
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error('Error creating document type:', error);
       throw error;
@@ -237,8 +257,20 @@ export const setupAPI = {
   // Update document type
   updateDocumentType: async (docTypeId, documentType) => {
     try {
-      const response = await api.put(`/api/v1/setup/document-types/${docTypeId}`, documentType);
-      return response.data;
+      const response = await fetch(`/api/setup/document-types/${docTypeId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(documentType),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error('Error updating document type:', error);
       throw error;
@@ -248,21 +280,18 @@ export const setupAPI = {
   // Delete document type
   deleteDocumentType: async (docTypeId) => {
     try {
-      const response = await api.delete(`/api/v1/setup/document-types/${docTypeId}`);
-      return response.data;
+      const response = await fetch(`/api/setup/document-types/${docTypeId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error('Error deleting document type:', error);
-      throw error;
-    }
-  },
-
-  // Reorder sections
-  reorderSections: async (docTypeId, sectionOrders) => {
-    try {
-      const response = await api.put(`/api/v1/setup/document-types/${docTypeId}/sections/reorder`, sectionOrders);
-      return response.data;
-    } catch (error) {
-      console.error('Error reordering sections:', error);
       throw error;
     }
   },
@@ -270,8 +299,20 @@ export const setupAPI = {
   // Add section rule
   addSectionRule: async (docTypeId, sectionName, ruleData) => {
     try {
-      const response = await api.post(`/api/v1/setup/document-types/${docTypeId}/sections/${sectionName}/rules`, ruleData);
-      return response.data;
+      const response = await fetch(`/api/setup/document-types/${docTypeId}/sections/${encodeURIComponent(sectionName)}/rules`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ruleData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error('Error adding section rule:', error);
       throw error;
@@ -281,8 +322,20 @@ export const setupAPI = {
   // Update section rule
   updateSectionRule: async (docTypeId, sectionName, ruleId, ruleData) => {
     try {
-      const response = await api.put(`/api/v1/setup/document-types/${docTypeId}/sections/${sectionName}/rules/${ruleId}`, ruleData);
-      return response.data;
+      const response = await fetch(`/api/setup/document-types/${docTypeId}/sections/${encodeURIComponent(sectionName)}/rules/${encodeURIComponent(ruleId)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ruleData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error('Error updating section rule:', error);
       throw error;
@@ -292,8 +345,16 @@ export const setupAPI = {
   // Delete section rule
   deleteSectionRule: async (docTypeId, sectionName, ruleId) => {
     try {
-      const response = await api.delete(`/api/v1/setup/document-types/${docTypeId}/sections/${sectionName}/rules/${ruleId}`);
-      return response.data;
+      const response = await fetch(`/api/setup/document-types/${docTypeId}/sections/${encodeURIComponent(sectionName)}/rules/${encodeURIComponent(ruleId)}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error('Error deleting section rule:', error);
       throw error;
@@ -303,8 +364,11 @@ export const setupAPI = {
   // Get predefined rules
   getPredefinedRules: async () => {
     try {
-      const response = await api.get('/api/v1/setup/predefined-rules');
-      return response.data;
+      const response = await fetch('/api/setup/predefined-rules');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       console.error('Error fetching predefined rules:', error);
       throw error;

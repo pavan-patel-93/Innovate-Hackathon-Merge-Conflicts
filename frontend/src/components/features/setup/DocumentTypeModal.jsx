@@ -39,6 +39,15 @@ export function DocumentTypeModal({
         id_format: docType.id_format || '',
         sections: docType.sections || []
       });
+    } else {
+      // Reset form data when creating new document type
+      setFormData({
+        code: '',
+        name: '',
+        description: '',
+        id_format: '',
+        sections: []
+      });
     }
   }, [docType]);
 

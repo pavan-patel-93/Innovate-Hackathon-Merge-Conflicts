@@ -26,10 +26,16 @@ async def ai_chat(
             })
         
         # Simulate AI response (replace with actual AI service)
-        response_content = f"""I've analyzed your {'uploaded files and ' if files else ''}message. Here's what I found:
+        file_analysis = ""
+        if files:
+            file_list = '\n'.join([f"- {f['filename']} uploaded successfully" for f in file_info])
+            file_analysis = f"**File Analysis:**\n{file_list}\n- Document structure validation: ✅ Passed\n- Compliance check: ⚠️ 2 minor issues found\n- Recommendations: Update document ID format and add revision history\n\n"
+        
+        files_prefix = "uploaded files and " if files else ""
+        
+        response_content = f"""I've analyzed your {files_prefix}message. Here's what I found:
 
-{('**File Analysis:**\n' + '\n'.join([f"- {f['filename']} uploaded successfully" for f in file_info]) + '\n- Document structure validation: ✅ Passed\n- Compliance check: ⚠️ 2 minor issues found\n- Recommendations: Update document ID format and add revision history\n\n') if files else ''}
-
+{file_analysis}
 **Response to your query:** "{message}"
 Based on regulatory guidelines, I recommend reviewing the document structure and ensuring all mandatory sections are present. Consider implementing the following:
 
@@ -50,16 +56,12 @@ Would you like me to provide more specific guidance on any of these areas?"""
             "created_at": datetime.now()
         }
         
-        await db.ai_chats.insert_one(chat_record)
+        await db.chat_history.insert_one(chat_record)
         
-        return {
-            "response": response_content,
-            "message": "Analysis completed successfully",
-            "files_processed": len(files)
-        }
+        return {"response": response_content, "files": file_info}
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing AI request: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/chat/history/{user_id}")
 async def get_chat_history(
@@ -69,16 +71,16 @@ async def get_chat_history(
 ):
     """Get AI chat history for a user"""
     try:
-        cursor = db.ai_chats.find({"user_id": user_id}).sort("created_at", -1).limit(limit)
+        # In a real application, you would filter by user_id
+        # For now, we'll just get the most recent chats
+        cursor = db.chat_history.find().sort("created_at", -1).limit(limit)
         chats = await cursor.to_list(length=limit)
         
-        # Convert ObjectId to str for JSON serialization
+        # Convert ObjectId to string for JSON serialization
         for chat in chats:
             chat["_id"] = str(chat["_id"])
-            if isinstance(chat.get("created_at"), datetime):
-                chat["created_at"] = chat["created_at"].isoformat()
-        
-        return chats
+            
+        return {"chats": chats}
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching chat history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -5,17 +5,9 @@ import Modal from "@/components/common/Modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { CustomRuleModal } from "./CustomRuleModal";
-import { useSetup } from "@/hooks/useSetup";
 import { 
   Plus, 
-  Trash2, 
-  AlertCircle,
-  AlertTriangle,
-  Info,
-  ChevronDown,
-  ChevronRight,
-  PlusCircle
+  Trash2
 } from "lucide-react";
 
 export function SectionRulesModal({ 
@@ -25,57 +17,36 @@ export function SectionRulesModal({
   section, 
   onSave 
 }) {
-  const { getPredefinedRules } = useSetup();
-  const [predefinedRules, setPredefinedRules] = useState([]);
   const [sectionRules, setSectionRules] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [expandedRule, setExpandedRule] = useState(null);
-  const [isCustomRuleModalOpen, setIsCustomRuleModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [newRuleName, setNewRuleName] = useState("");
+  const [newRuleDescription, setNewRuleDescription] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      loadPredefinedRules();
       setSectionRules(section?.rules || []);
     }
   }, [isOpen, section]);
 
-  const loadPredefinedRules = async () => {
-    try {
-      const rules = await getPredefinedRules();
-      setPredefinedRules(rules);
-    } catch (error) {
-      console.error('Error loading predefined rules:', error);
-    }
-  };
-
-  const handleAddRule = (ruleTemplate) => {
+  const handleAddRule = () => {
+    if (!newRuleName.trim()) return;
+    
     const newRule = {
-      rule_id: ruleTemplate.rule_id,
-      name: ruleTemplate.name,
-      description: ruleTemplate.description,
+      rule_id: `custom_${Date.now()}`,
+      name: newRuleName.trim(),
+      description: newRuleDescription.trim() || 'Custom validation rule',
       is_active: true,
-      severity: ruleTemplate.severity,
-      parameters: { ...ruleTemplate.parameters }
+      severity: 'minor',
+      parameters: {}
     };
     setSectionRules(prev => [...prev, newRule]);
+    setNewRuleName('');
+    setNewRuleDescription('');
   };
 
   const handleUpdateRule = (index, field, value) => {
     setSectionRules(prev => prev.map((rule, i) => 
       i === index ? { ...rule, [field]: value } : rule
-    ));
-  };
-
-  const handleUpdateRuleParameter = (index, paramKey, value) => {
-    setSectionRules(prev => prev.map((rule, i) => 
-      i === index ? { 
-        ...rule, 
-        parameters: { 
-          ...rule.parameters, 
-          [paramKey]: value 
-        } 
-      } : rule
     ));
   };
 
@@ -99,23 +70,6 @@ export function SectionRulesModal({
     }
   };
 
-  const handleCustomRuleCreate = (newRule) => {
-    setSectionRules(prev => [...prev, newRule]);
-  };
-
-  const getSeverityIcon = (severity) => {
-    switch (severity) {
-      case 'critical':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case 'major':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case 'minor':
-        return <Info className="w-4 h-4 text-blue-500" />;
-      default:
-        return <Info className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
   const getSeverityColor = (severity) => {
     switch (severity) {
       case 'critical':
@@ -129,248 +83,129 @@ export function SectionRulesModal({
     }
   };
 
-  // Filter rules based on search term
-  const filteredRules = predefinedRules.filter(rule => 
-    rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    rule.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title={`Section Rules: ${section?.name}`}
-        description="Configure validation rules for this document section"
-        size="2xl"
-      >
-        <div className="flex h-[70vh]">
-          {/* Available Rules */}
-          <div className="w-1/3 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-gray-900 dark:text-white">Available Rules</h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setIsCustomRuleModalOpen(true)}
-                className="flex items-center space-x-1"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Custom</span>
-              </Button>
-            </div>
-            
-            {/* Search input */}
-            <div className="mb-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Section Rules: ${section?.name}`}
+      description="Add validation rules for this document section"
+      size="lg"
+    >
+      <div className="space-y-6">
+        {/* Add New Rule */}
+        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+          <h3 className="font-medium text-gray-900 dark:text-white mb-4">Add New Rule</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Rule Name *
+              </label>
               <Input
-                placeholder="Search rules..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
+                value={newRuleName}
+                onChange={(e) => setNewRuleName(e.target.value)}
+                placeholder="e.g., Must contain introduction"
+                onKeyPress={(e) => e.key === 'Enter' && handleAddRule()}
               />
             </div>
-            
-            <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "calc(70vh - 120px)" }}>
-              {filteredRules.length === 0 ? (
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                  <p>No rules found</p>
-                </div>
-              ) : (
-                filteredRules.map((rule) => (
-                  <Card key={rule.rule_id} className="cursor-pointer hover:shadow-md transition-shadow">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                          {rule.name}
-                        </h4>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(rule.severity)}`}>
-                          {rule.severity}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                        {rule.description}
-                      </p>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddRule(rule)}
-                        className="w-full"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Add Rule
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description (optional)
+              </label>
+              <Input
+                value={newRuleDescription}
+                onChange={(e) => setNewRuleDescription(e.target.value)}
+                placeholder="Brief description of the rule"
+                onKeyPress={(e) => e.key === 'Enter' && handleAddRule()}
+              />
             </div>
+            <Button 
+              onClick={handleAddRule} 
+              disabled={!newRuleName.trim()}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Rule</span>
+            </Button>
           </div>
+        </div>
 
-          {/* Section Rules */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            <h3 className="font-medium text-gray-900 dark:text-white mb-4">
-              Applied Rules ({sectionRules.length})
-            </h3>
-            
-            {sectionRules.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <p>No rules applied yet</p>
-                <p className="text-sm">Select rules from the left panel or create a custom rule</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {sectionRules.map((rule, index) => (
-                  <Card key={index}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-4">
+        {/* Current Rules */}
+        <div>
+          <h3 className="font-medium text-gray-900 dark:text-white mb-4">
+            Current Rules ({sectionRules.length})
+          </h3>
+          
+          {sectionRules.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <p>No rules added yet</p>
+              <p className="text-sm">Add your first rule above</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sectionRules.map((rule, index) => (
+                <Card key={index}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
                         <div className="flex items-center space-x-3">
-                          {getSeverityIcon(rule.severity)}
-                          <div>
-                            <h4 className="font-medium text-gray-900 dark:text-white">
-                              {rule.name}
-                            </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {rule.description}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => setExpandedRule(expandedRule === index ? null : index)}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          >
-                            {expandedRule === index ? 
-                              <ChevronDown className="w-4 h-4" /> : 
-                              <ChevronRight className="w-4 h-4" />
-                            }
-                          </button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveRule(index)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-4 mb-4">
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={rule.is_active}
-                            onChange={(e) => handleUpdateRule(index, 'is_active', e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Active
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {rule.name}
+                          </h4>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(rule.severity)}`}>
+                            {rule.severity}
                           </span>
-                        </label>
-                        <select
-                          value={rule.severity}
-                          onChange={(e) => handleUpdateRule(index, 'severity', e.target.value)}
-                          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-white"
-                        >
-                          <option value="critical">Critical</option>
-                          <option value="major">Major</option>
-                          <option value="minor">Minor</option>
-                        </select>
-                      </div>
-
-                      {expandedRule === index && (
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                            Rule Parameters
-                          </h5>
-                          <div className="space-y-3">
-                            {Object.entries(rule.parameters).map(([key, value]) => (
-                              <div key={key}>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                  {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                </label>
-                                {typeof value === 'object' && value.type === 'array' ? (
-                                  <div className="space-y-2">
-                                    {Array.isArray(rule.parameters[key]) ? (
-                                      rule.parameters[key].map((item, itemIndex) => (
-                                        <div key={itemIndex} className="flex items-center space-x-2">
-                                          <Input
-                                            value={item}
-                                            onChange={(e) => {
-                                              const newArray = [...rule.parameters[key]];
-                                              newArray[itemIndex] = e.target.value;
-                                              handleUpdateRuleParameter(index, key, newArray);
-                                            }}
-                                            className="flex-1"
-                                          />
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                              const newArray = rule.parameters[key].filter((_, i) => i !== itemIndex);
-                                              handleUpdateRuleParameter(index, key, newArray);
-                                            }}
-                                            className="text-red-600 hover:text-red-700"
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </Button>
-                                        </div>
-                                      ))
-                                    ) : null}
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        const newArray = [...(rule.parameters[key] || []), ''];
-                                        handleUpdateRuleParameter(index, key, newArray);
-                                      }}
-                                    >
-                                      <Plus className="w-3 h-3 mr-1" />
-                                      Add Item
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <Input
-                                    type={typeof value === 'number' ? 'number' : 'text'}
-                                    value={rule.parameters[key] || ''}
-                                    onChange={(e) => {
-                                      const newValue = typeof value === 'number' ? 
-                                        parseFloat(e.target.value) || 0 : 
-                                        e.target.value;
-                                      handleUpdateRuleParameter(index, key, newValue);
-                                    }}
-                                  />
-                                )}
-                              </div>
-                            ))}
-                          </div>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {rule.description}
+                        </p>
+                        <div className="flex items-center space-x-4 mt-3">
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={rule.is_active}
+                              onChange={(e) => handleUpdateRule(index, 'is_active', e.target.checked)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              Active
+                            </span>
+                          </label>
+                          <select
+                            value={rule.severity}
+                            onChange={(e) => handleUpdateRule(index, 'severity', e.target.value)}
+                            className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-white"
+                          >
+                            <option value="critical">Critical</option>
+                            <option value="major">Major</option>
+                            <option value="minor">Minor</option>
+                          </select>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveRule(index)}
+                        className="text-red-600 hover:text-red-700 ml-4"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
 
-        <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Rules'}
-          </Button>
-        </div>
-      </Modal>
-      
-      {/* Custom Rule Modal */}
-      <CustomRuleModal
-        isOpen={isCustomRuleModalOpen}
-        onClose={() => setIsCustomRuleModalOpen(false)}
-        onSave={handleCustomRuleCreate}
-      />
-    </>
+      <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave} disabled={loading}>
+          {loading ? 'Saving...' : 'Save Rules'}
+        </Button>
+      </div>
+    </Modal>
   );
 }

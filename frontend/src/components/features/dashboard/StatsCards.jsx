@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, BarChart3, Clock } from "lucide-react";
 
-export function StatsCards({ documents }) {
+export function StatsCards({ documents, showOnlyTopStats = false }) {
   const analyzedCount = documents.filter(d => d.status === 'analyzed').length;
   const pendingCount = documents.filter(d => d.status === 'uploaded').length;
   
@@ -37,6 +37,62 @@ export function StatsCards({ documents }) {
     if (score >= 60) return "bg-yellow-100 dark:bg-yellow-900/30";
     return "bg-red-100 dark:bg-red-900/30";
   };
+
+  if (showOnlyTopStats) {
+    return (
+      <>
+        {/* Document Count */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="w-5 h-5" />
+              <span>Document Count</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                {documents.length}
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Total Documents
+              </p>
+              <div className="mt-4 space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-blue-600 dark:text-blue-400">Analyzed</span>
+                  <span className="text-gray-500">{analyzedCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-yellow-600">Pending</span>
+                  <span className="text-gray-500">{pendingCount}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Compliance Score */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <BarChart3 className="w-5 h-5" />
+              <span>Overall Score</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full text-3xl font-bold ${getScoreBgColor(averageScore)} ${getScoreColor(averageScore)}`}>
+                {averageScore}
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Average Compliance Score
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
 
   return (
     <>

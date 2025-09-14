@@ -1,28 +1,14 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileUpload } from "@/components/common/FileUpload";
 import { DocumentList } from "./DocumentList";
 import { StatsCards } from "./StatsCards";
-import { useFileUpload } from "@/hooks/useFileUpload";
+import { PieChart } from "./PieChart";
 import { useDocuments } from "@/hooks/useDocuments";
-import { Upload, FileCheck } from "lucide-react";
+import { FileCheck } from "lucide-react";
 
 export function Dashboard() {
-  const { files, addFiles, uploadFiles, uploading, error } = useFileUpload();
   const { documents, loadDocuments, analyzeDocument, isAnalyzing } = useDocuments();
-
-  const handleFileSelect = async (selectedFiles) => {
-    addFiles(selectedFiles);
-    
-    try {
-      const results = await uploadFiles();
-      // Reload documents to show newly uploaded ones
-      await loadDocuments();
-    } catch (error) {
-      console.error('Upload error:', error);
-    }
-  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
@@ -36,58 +22,40 @@ export function Dashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Upload Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Upload className="w-5 h-5" />
-                  <span>Upload Documents</span>
-                </CardTitle>
-                <CardDescription>
-                  Upload your regulatory documents (Word, PDF, or text) for compliance validation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FileUpload
-                  onFileSelect={handleFileSelect}
-                  disabled={uploading}
-                  className={uploading ? "opacity-50" : ""}
-                />
-                {error && (
-                  <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Documents List */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FileCheck className="w-5 h-5" />
-                  <span>Document History</span>
-                </CardTitle>
-                <CardDescription>
-                  Review compliance analysis results for your uploaded documents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DocumentList
-                  documents={documents}
-                  onAnalyze={analyzeDocument}
-                  isAnalyzing={isAnalyzing}
-                />
-              </CardContent>
-            </Card>
+        <div className="space-y-6">
+          {/* Top Stats Row - Document Count and Overall Score */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <StatsCards documents={documents} showOnlyTopStats={true} />
           </div>
 
-          {/* Sidebar Stats */}
-          <div className="space-y-6">
-            <StatsCards documents={documents} />
+          {/* Pie Chart and History Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Pie Chart */}
+            <div className="lg:col-span-1">
+              <PieChart documents={documents} />
+            </div>
+
+            {/* Document History */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <FileCheck className="w-5 h-5" />
+                    <span>Document History</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Review compliance analysis results for your uploaded documents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DocumentList
+                    documents={documents}
+                    onAnalyze={analyzeDocument}
+                    isAnalyzing={isAnalyzing}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

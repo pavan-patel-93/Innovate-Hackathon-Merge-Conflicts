@@ -1,57 +1,65 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useApi } from "./useApi";
 import { setupAPI } from "@/services/api";
 import { useAuthStore } from "@/store/auth";
 
 export function useSetup() {
   const { user } = useAuthStore();
   const [documentTypes, setDocumentTypes] = useState([]);
-
-  const {
-    data: documentTypesData,
-    loading,
-    error,
-    execute: loadDocumentTypesApi
-  } = useApi(setupAPI.getDocumentTypes);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const loadDocumentTypes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const data = await loadDocumentTypesApi();
+      const data = await setupAPI.getDocumentTypes();
       setDocumentTypes(data);
     } catch (error) {
       console.error('Error loading document types:', error);
+      setError(error);
+    } finally {
+      setLoading(false);
     }
-  }, [loadDocumentTypesApi]);
+  }, []);
 
   const createDocumentType = useCallback(async (documentType) => {
+    setLoading(true);
     try {
       await setupAPI.createDocumentType(documentType, user?.username);
       await loadDocumentTypes();
     } catch (error) {
       console.error('Error creating document type:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [user, loadDocumentTypes]);
 
   const updateDocumentType = useCallback(async (docTypeId, documentType) => {
+    setLoading(true);
     try {
       await setupAPI.updateDocumentType(docTypeId, documentType);
       await loadDocumentTypes();
     } catch (error) {
       console.error('Error updating document type:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [loadDocumentTypes]);
 
   const deleteDocumentType = useCallback(async (docTypeId) => {
+    setLoading(true);
     try {
       await setupAPI.deleteDocumentType(docTypeId);
       await loadDocumentTypes();
     } catch (error) {
       console.error('Error deleting document type:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [loadDocumentTypes]);
 
@@ -72,16 +80,6 @@ export function useSetup() {
       throw error;
     }
   }, []);
-
-  const reorderSections = useCallback(async (docTypeId, sectionOrders) => {
-    try {
-      await setupAPI.reorderSections(docTypeId, sectionOrders);
-      await loadDocumentTypes();
-    } catch (error) {
-      console.error('Error reordering sections:', error);
-      throw error;
-    }
-  }, [loadDocumentTypes]);
 
   const addSectionRule = useCallback(async (docTypeId, sectionName, ruleData) => {
     try {
@@ -124,10 +122,8 @@ export function useSetup() {
 
   // Load document types on mount
   useEffect(() => {
-    if (user) {
-      loadDocumentTypes();
-    }
-  }, [user, loadDocumentTypes]);
+    loadDocumentTypes();
+  }, [loadDocumentTypes]);
 
   return {
     documentTypes,
@@ -139,7 +135,6 @@ export function useSetup() {
     deleteDocumentType,
     getDocumentType,
     getDocumentTypeByCode,
-    reorderSections,
     addSectionRule,
     updateSectionRule,
     deleteSectionRule,

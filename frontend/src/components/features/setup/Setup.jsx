@@ -64,6 +64,8 @@ export function Setup() {
         await createDocumentType(docTypeData);
       }
       await loadDocumentTypes();
+      // Clear the editing state
+      setEditingDocType(null);
       createModal.close();
       editModal.close();
     } catch (error) {
