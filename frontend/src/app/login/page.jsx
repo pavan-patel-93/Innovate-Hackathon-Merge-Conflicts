@@ -15,7 +15,7 @@ export default function LoginPage() {
     if (user && !isLoading) {
       router.push('/dashboard');
     }
-  }, [user, isLoading, router]);
+  }, []);
   
   // If still loading, show loading state
   if (isLoading) {

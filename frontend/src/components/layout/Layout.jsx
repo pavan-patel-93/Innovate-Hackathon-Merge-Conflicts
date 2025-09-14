@@ -2,7 +2,7 @@
 
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import LoadingSpinner  from "@/components/common/LoadingSpinner";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
