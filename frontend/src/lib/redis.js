@@ -25,7 +25,6 @@ class RedisClient {
       });
 
       this.client.on('ready', () => {
-        console.log('Redis client connected and ready');
         this.isReady = true;
       });
 

@@ -3,17 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Shield, LogOut, User } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
+import { useUser, useLogout } from "@/hooks/useUser";
 import { useRouter } from "next/navigation";
 
 export function Header() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user } = useUser();
+  const { logout } = useLogout();
 
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
     }
