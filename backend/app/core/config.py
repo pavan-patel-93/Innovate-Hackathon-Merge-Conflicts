@@ -38,7 +38,7 @@ class Settings(BaseSettings):
         description="MongoDB connection URI"
     )
     MONGODB_DB_NAME: str = Field(
-        default="fasi_api",
+        default="chatapp",
         description="MongoDB database name"
     )
     
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
         description="MongoDB connection URI"
     )
     MONGODB_DB_NAME: str = Field(
-        default=os.environ.get("MONGODB_DB_NAME", "fasi_api"),
+        default=os.environ.get("MONGODB_DB_NAME", "chatapp"),
         description="MongoDB database name"
     )
     

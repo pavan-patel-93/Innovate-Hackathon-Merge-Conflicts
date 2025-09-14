@@ -13,7 +13,7 @@ from app.core.logging import get_logger
 logger = get_logger("error_handler")
 
 
-async def fasi_api_exception_handler(request: Request, exc: FasiAPIException) -> JSONResponse:
+async def chatapp_exception_handler(request: Request, exc: FasiAPIException) -> JSONResponse:
     """Handle FasiAPI custom exceptions"""
     logger.error(f"FasiAPI Exception: {exc.message}", extra={
         "status_code": exc.status_code,

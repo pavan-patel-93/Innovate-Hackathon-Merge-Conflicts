@@ -253,7 +253,7 @@ WS /ws/{client_id}/{room_name}/{username}
 ```bash
 # Database
 MONGODB_URI=mongodb://localhost:27017
-MONGODB_DB_NAME=fasi_api
+MONGODB_DB_NAME=chatapp
 
 # AI Services
 AZURE_OPENAI_KEY=your_key_here

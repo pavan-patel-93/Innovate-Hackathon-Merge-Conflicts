@@ -152,20 +152,38 @@ export const aiChatAPI = {
       console.log('[AI API] Sending message:', message);
       console.log('[AI API] Files to send:', files.length, files.map(f => f.name || f.filename || 'unknown'));
       
-      const formData = new FormData();
-      formData.append('message', message);
-      
-      files.forEach((file, index) => {
-        console.log(`[AI API] Appending file ${index}:`, file.name || file.filename, file.size);
-        formData.append('files', file);
-      });
-
-      const response = await api.post('/api/v1/ai/chat', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
+      // If files are provided, upload them one by one
+      if (files.length > 0) {
+        const uploadResults = [];
+        
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          console.log(`[AI API] Uploading file:`, file.name || file.filename, file.size);
+          
+          const response = await api.post('/api/v1/documents/upload/', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          
+          uploadResults.push(response.data);
+        }
+        
+        return {
+          message: message,
+          uploads: uploadResults,
+          status: 'success'
+        };
+      } else {
+        // If no files, just return the message
+        return {
+          message: message,
+          uploads: [],
+          status: 'success'
+        };
+      }
     } catch (error) {
       console.error('Error sending AI message:', error);
       throw error;

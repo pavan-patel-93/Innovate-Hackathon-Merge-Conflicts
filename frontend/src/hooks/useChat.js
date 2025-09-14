@@ -56,7 +56,7 @@ export function useChat() {
         id: Date.now() + 1,
         type: 'bot',
         content: aiResponse.response || aiResponse.message || 'Analysis completed successfully.',
-        uploadResults: aiResponse.upload_results || null,
+        uploadResults: aiResponse.uploads || aiResponse.upload_results || null,
         timestamp: new Date()
       };
       

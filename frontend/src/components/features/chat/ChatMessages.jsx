@@ -1,6 +1,7 @@
 "use client";
 
-import { Bot, User, Paperclip, FileText, BarChart3 } from "lucide-react";
+import { Bot, User, Paperclip, FileText, BarChart3, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
 // Simple markdown parser for basic formatting
 function parseMarkdown(text) {
@@ -17,6 +18,79 @@ function parseMarkdown(text) {
     .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
     // Line breaks
     .replace(/\n/g, '<br>');
+}
+
+// Component to display document content with collapsible sections
+function DocumentContentDisplay({ result }) {
+  const [showContent, setShowContent] = useState(false);
+  const [showCompliance, setShowCompliance] = useState(true);
+  
+  return (
+    <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+      <div className="flex items-center space-x-2 mb-2">
+        <FileText className="w-4 h-4 text-blue-500" />
+        <span className="font-medium text-sm">{result.filename}</span>
+        {result.compliance_score !== undefined && (
+          <div className="flex items-center space-x-1">
+            <BarChart3 className="w-4 h-4 text-green-500" />
+            <span className={`text-xs px-2 py-1 rounded-full ${
+              result.compliance_score >= 80 ? 'bg-green-100 text-green-800' :
+              result.compliance_score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              Score: {result.compliance_score}/100
+            </span>
+          </div>
+        )}
+      </div>
+      
+      {/* Document Content Section */}
+      {result.parsed_content && (
+        <div className="mb-3">
+          <button
+            onClick={() => setShowContent(!showContent)}
+            className="flex items-center space-x-2 text-sm font-medium text-blue-600 hover:text-blue-800 mb-2"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Document Content</span>
+            {showContent ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showContent && (
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3 max-h-96 overflow-y-auto">
+              <div 
+                className="text-sm prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap"
+                dangerouslySetInnerHTML={{ 
+                  __html: parseMarkdown(result.parsed_content) 
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Compliance Analysis Section */}
+      {(result.compliance_analysis || result.compliance_report) && (
+        <div>
+          <button
+            onClick={() => setShowCompliance(!showCompliance)}
+            className="flex items-center space-x-2 text-sm font-medium text-green-600 hover:text-green-800 mb-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Compliance Analysis</span>
+            {showCompliance ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showCompliance && (
+            <div 
+              className="text-sm prose prose-sm max-w-none dark:prose-invert"
+              dangerouslySetInnerHTML={{ 
+                __html: parseMarkdown(result.compliance_report || result.compliance_analysis) 
+              }}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function ChatMessages({ messages, isTyping }) {
@@ -57,32 +131,7 @@ export function ChatMessages({ messages, isTyping }) {
             {message.uploadResults && message.uploadResults.length > 0 && (
               <div className="mb-4 space-y-3">
                 {message.uploadResults.map((result, index) => (
-                  <div key={index} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <FileText className="w-4 h-4 text-blue-500" />
-                      <span className="font-medium text-sm">{result.filename}</span>
-                      {result.compliance_score !== undefined && (
-                        <div className="flex items-center space-x-1">
-                          <BarChart3 className="w-4 h-4 text-green-500" />
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            result.compliance_score >= 80 ? 'bg-green-100 text-green-800' :
-                            result.compliance_score >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            Score: {result.compliance_score}/100
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {result.compliance_analysis && (
-                      <div 
-                        className="text-sm prose prose-sm max-w-none dark:prose-invert"
-                        dangerouslySetInnerHTML={{ 
-                          __html: parseMarkdown(result.compliance_analysis) 
-                        }}
-                      />
-                    )}
-                  </div>
+                  <DocumentContentDisplay key={index} result={result} />
                 ))}
               </div>
             )}

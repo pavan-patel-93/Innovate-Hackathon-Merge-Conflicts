@@ -187,7 +187,7 @@ python -m uvicorn app.main_improved:app --host 0.0.0.0 --port 8000
 ```bash
 # Required environment variables
 MONGODB_URI=mongodb://localhost:27017
-MONGODB_DB_NAME=fasi_api
+MONGODB_DB_NAME=chatapp
 
 # Optional AI services
 AZURE_OPENAI_KEY=your_key_here

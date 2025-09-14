@@ -51,7 +51,7 @@ def setup_logging(
         log_path.parent.mkdir(parents=True, exist_ok=True)
     
     # Create logger
-    logger = logging.getLogger("fasi_api")
+    logger = logging.getLogger("chatapp")
     logger.setLevel(getattr(logging, log_level.upper()))
     
     # Clear existing handlers
@@ -88,7 +88,7 @@ def setup_logging(
     return logger
 
 
-def get_logger(name: str = "fasi_api") -> logging.Logger:
+def get_logger(name: str = "chatapp") -> logging.Logger:
     """Get logger instance."""
     return logging.getLogger(name)
 

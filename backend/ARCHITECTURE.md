@@ -193,7 +193,7 @@ pip install -r requirements.txt
 ### 2. Set Environment Variables
 ```bash
 export MONGODB_URI="mongodb://localhost:27017"
-export MONGODB_DB_NAME="fasi_api"
+export MONGODB_DB_NAME="chatapp"
 export LOG_LEVEL="INFO"
 ```
 

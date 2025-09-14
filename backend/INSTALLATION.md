@@ -52,7 +52,7 @@ SECRET_KEY=your-secret-key-change-in-production
 
 # Database Settings
 MONGODB_URI=mongodb://localhost:27017
-MONGODB_DB_NAME=fasi_api
+MONGODB_DB_NAME=chatapp
 
 # CORS Settings
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001

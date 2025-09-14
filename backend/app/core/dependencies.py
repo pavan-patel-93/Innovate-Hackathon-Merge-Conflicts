@@ -10,10 +10,8 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from app.core.config import settings
 from app.core.database import get_database
 from app.repositories.chat_repository import ChatRepository
-from app.repositories.document_repository import DocumentRepository
 from app.repositories.user_repository import UserRepository
 from app.services.chat_service import ChatService
-from app.services.document_service import DocumentService
 from app.services.ai_service import AIService
 from app.services.websocket_service import WebSocketService
 from app.services.file_upload_service import FileUploadService
@@ -34,11 +32,6 @@ async def get_db() -> AsyncIOMotorDatabase:
 async def get_chat_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> ChatRepository:
     """Get chat repository instance."""
     return ChatRepository(db)
-
-
-async def get_document_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> DocumentRepository:
-    """Get document repository instance."""
-    return DocumentRepository(db)
 
 
 async def get_user_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> UserRepository:
@@ -68,11 +61,3 @@ async def get_chat_service(
 ) -> ChatService:
     """Get chat service instance."""
     return ChatService(chat_repo, websocket_service)
-
-
-async def get_document_service(
-    document_repo: DocumentRepository = Depends(get_document_repository),
-    ai_service: AIService = Depends(get_ai_service)
-) -> DocumentService:
-    """Get document service instance."""
-    return DocumentService(document_repo, ai_service)
