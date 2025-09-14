@@ -42,6 +42,38 @@ class Settings(BaseSettings):
         description="MongoDB database name"
     )
     
+        # Database settings
+    MONGODB_URI: str = Field(
+        default=os.environ.get("MONGODB_URI", "mongodb://localhost:27017"),
+        description="MongoDB connection URI"
+    )
+    MONGODB_DB_NAME: str = Field(
+        default=os.environ.get("MONGODB_DB_NAME", "fasi_api"),
+        description="MongoDB database name"
+    )
+    
+    # AI Service API Keys
+    LAMAPARSE_API_KEY: str = Field(
+        default=os.environ.get("LAMAPARSE_API_KEY", ""),
+        description="LlamaParse API key"
+    )
+    AZURE_OPENAI_KEY: str = Field(
+        default=os.environ.get("AZURE_OPENAI_KEY", ""),
+        description="Azure OpenAI API key"
+    )
+    AZURE_OPENAI_ENDPOINT: str = Field(
+        default=os.environ.get("AZURE_OPENAI_ENDPOINT", ""),
+        description="Azure OpenAI endpoint"
+    )
+    AZURE_OPENAI_DEPLOYMENT: str = Field(
+        default=os.environ.get("AZURE_OPENAI_DEPLOYMENT", "gpt-35-turbo"),
+        description="Azure OpenAI deployment name"
+    )
+    AZURE_OPENAI_API_VERSION: str = Field(
+        default=os.environ.get("AZURE_OPENAI_API_VERSION", "2024-02-01"),
+        description="Azure OpenAI API version"
+    )
+
     # Logging settings
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
     LOG_FORMAT: str = Field(default="json", description="Log format (json/text)")
