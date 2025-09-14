@@ -90,8 +90,18 @@ Your task is to analyze the provided document content and check compliance again
             prompt += "\n"
         
         prompt += """
+IMPORTANT SCORING INSTRUCTIONS:
+- Start with a baseline compliance score of 100 points
+- Only deduct points when you find actual compliance issues
+- If NO issues are found, the score should remain 100
+- Deduct points based on severity:
+  * Critical issues: -3 points each
+  * Major issues: -2 points each  
+  * Minor issues: -1 points each
+
 For each section, analyze if it exists in the document and if it meets the specified rules.
 For each rule violation, note the severity level (critical, major, minor).
+Only report issues that are actual violations - do not create issues if the document is compliant.
 
 Provide your analysis in the following JSON format:
 {
@@ -111,9 +121,14 @@ Provide your analysis in the following JSON format:
         }
     ],
     "overall_compliance": "compliant/partially_compliant/non_compliant",
-    "summary": "Brief summary of compliance status"
+    "summary": "Brief summary of compliance status",
+    "compliance_score": 100
 }
-"""
+
+CRITICAL: Include the "compliance_score" field in your response. Calculate it as:
+- Start with 100 points
+- Subtract points only for actual issues found
+- If no issues are found, return 100"""
         
         return prompt
     
@@ -125,6 +140,11 @@ Provide your analysis in the following JSON format:
         Minor: -1 points
         Starting score: 100
         """
+        # First check if AI already provided a compliance_score
+        if 'compliance_score' in analysis_result:
+            return float(analysis_result['compliance_score'])
+        
+        # Fallback calculation if AI didn't provide score
         score = 100.0
         
         sections_analysis = analysis_result.get('sections_analysis', [])
@@ -134,11 +154,11 @@ Provide your analysis in the following JSON format:
             for issue in issues:
                 severity = issue.get('severity', 'minor').lower()
                 if severity == 'critical':
-                    score -= 20
+                    score -= 3
                 elif severity == 'major':
-                    score -= 10
+                    score -= 2
                 elif severity == 'minor':
-                    score -= 5
+                    score -= 1
         
         # Ensure score doesn't go below 0
         return max(0.0, score)
@@ -189,11 +209,11 @@ Provide your analysis in the following JSON format:
                 report += "No issues found for this section.\n\n"
         
         # Add scoring breakdown
-        report += "## Scoring Breakdown\n\n"
-        report += "- Starting Score: 100 points\n"
-        report += "- Critical Issues: -20 points each\n"
-        report += "- Major Issues: -10 points each\n"
-        report += "- Minor Issues: -5 points each\n\n"
+        # report += "## Scoring Breakdown\n\n"
+        # report += "- Starting Score: 100 points\n"
+        # report += "- Critical Issues: -20 points each\n"
+        # report += "- Major Issues: -10 points each\n"
+        # report += "- Minor Issues: -5 points each\n\n"
         
         # Count issues by severity
         critical_count = sum(1 for section in sections_analysis for issue in section.get('issues', []) if issue.get('severity') == 'critical')

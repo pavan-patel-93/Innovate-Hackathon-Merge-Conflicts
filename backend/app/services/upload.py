@@ -225,7 +225,7 @@ async def upload_file(file: UploadFile = File(...)):
         # Get document configuration and perform compliance analysis
         config_service = await get_mongo_client()
         document_config = await config_service.get_document_config_by_code("SOP")
-
+        # print(document_config)
         compliance_analysis = None
         compliance_score = 0.0
         compliance_report = "Compliance analysis unavailable"
@@ -240,7 +240,7 @@ async def upload_file(file: UploadFile = File(...)):
                     messages=[
                         {
                             "role": "system",
-                            "content": system_prompt + "\n\nFocus specifically on these critical compliance areas:\n1. MISSING SECTIONS: Title, Purpose, Scope, Responsibilities, Definitions, Procedure, References, Revision History, Approvals\n2. METADATA ISSUES: Document ID (SOP-###), Version/Revision, Effective Date (YYYY-MM-DD)\n3. STALE REFERENCES: Missing years in citations (ICH Q7, ISO 13485:2016, 21 CFR Part 11)\n4. CONTENT QUALITY: Prohibited placeholders (TBD, lorem ipsum), insufficient procedure steps (<3 numbered steps), missing signature lines\n\nReturn analysis as JSON:\n{\n  \"compliance_score\": <0-100 based on severity weights: Critical=3, Major=2, Minor=1>,\n  \"overall_status\": \"compliant|non_compliant|partially_compliant\",\n  \"sections_analyzed\": [\n    {\n      \"section_name\": \"string\",\n      \"status\": \"compliant|non_compliant|missing\",\n      \"issues\": [\"specific issues found - be concise and direct\"]\n    }\n  ]\n}"
+                            "content": system_prompt
                         },
                         {
                             "role": "user",
@@ -257,10 +257,12 @@ async def upload_file(file: UploadFile = File(...)):
                 # Parse JSON response and generate structured markdown
                 try:
                     compliance_analysis = json.loads(ai_response)
-                    compliance_score = compliance_analysis.get("compliance_score", 0.0)
+                    
+                    # Use the service method to calculate compliance score
+                    compliance_score = config_service.calculate_compliance_score(compliance_analysis)
                     
                     # Generate structured markdown report
-                    compliance_report = generate_markdown_report(compliance_analysis, document_config)
+                    compliance_report = config_service.format_compliance_report(compliance_analysis, compliance_score, document_config)
                     
                     logger.info(f"Successfully parsed compliance analysis with score: {compliance_score}")
                     
