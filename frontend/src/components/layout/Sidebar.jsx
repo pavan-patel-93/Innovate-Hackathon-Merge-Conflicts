@@ -54,32 +54,6 @@ export function Sidebar({ activeTab, onTabChange }) {
           })}
         </nav>
       </div>
-
-      {/* Quick Info Section */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-4">
-          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-medium text-gray-900 dark:text-white mb-3">
-              Quick Info
-            </h3>
-            <div className="space-y-3">
-              {navigationItems.map((item) => (
-                <div key={item.id} className="text-sm">
-                  <p className="font-medium text-gray-900 dark:text-white mb-1">
-                    {item.label}
-                  </p>
-                  <p 
-                    id={`${item.id}-description`}
-                    className="text-xs text-gray-600 dark:text-gray-400"
-                  >
-                    {item.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

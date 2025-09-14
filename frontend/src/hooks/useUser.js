@@ -70,7 +70,7 @@ export function useUser({
  * @param {string} redirectTo - URL to redirect to after successful login
  * @returns {Object} Login handler and related states
  */
-export function useLogin(redirectTo = '/dashboard') {
+export function useLogin(redirectTo = '/') {
   const router = useRouter();
   const { mutate } = useUser();
   const [isLoading, setIsLoading] = useState(false);
@@ -116,7 +116,7 @@ export function useLogin(redirectTo = '/dashboard') {
  * @param {string} redirectTo - URL to redirect to after successful signup
  * @returns {Object} Signup handler and related states
  */
-export function useSignup(redirectTo = '/dashboard') {
+export function useSignup(redirectTo = '/') {
   const router = useRouter();
   const { mutate } = useUser();
   const [isLoading, setIsLoading] = useState(false);

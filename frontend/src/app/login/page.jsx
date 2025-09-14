@@ -13,7 +13,7 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (user && !isLoading) {
-      router.push('/dashboard');
+      router.push('/');
     }
   }, []);
   

@@ -31,9 +31,9 @@ export default function middleware(request) {
     return NextResponse.redirect(loginUrl);
   }
   
-  // If accessing auth paths with a session cookie, redirect to dashboard
+  // If accessing auth paths with a session cookie, redirect to root
   if (isAuthPath && sessionCookie) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
   
   // For all other paths, continue with the request
