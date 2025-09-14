@@ -1,6 +1,6 @@
 # app/api/v1/endpoints/ai.py
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from app.db.mongodb import get_database
+from app.core.dependencies import get_database
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Dict, Any, Optional
 import uuid
