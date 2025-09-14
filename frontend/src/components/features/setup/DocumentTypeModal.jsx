@@ -8,7 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { 
   Plus, 
   GripVertical, 
-  Trash2 
+  Trash2,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 export function DocumentTypeModal({ 
@@ -26,6 +28,7 @@ export function DocumentTypeModal({
   });
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
+  const [expandedSections, setExpandedSections] = useState(new Set());
 
   useEffect(() => {
     if (docType) {
@@ -35,6 +38,8 @@ export function DocumentTypeModal({
         description: docType.description || '',
         sections: docType.sections || []
       });
+      // Expand all sections when editing existing document type
+      setExpandedSections(new Set(docType.sections?.map((_, index) => index) || []));
     } else {
       // Reset form data when creating new document type
       setFormData({
@@ -43,6 +48,7 @@ export function DocumentTypeModal({
         description: '',
         sections: []
       });
+      setExpandedSections(new Set());
     }
   }, [docType]);
 
@@ -66,6 +72,10 @@ export function DocumentTypeModal({
       is_required: true,
       rules: []
     };
+    
+    // Collapse all existing sections when adding a new one
+    setExpandedSections(new Set([formData.sections.length])); // Only expand the new section
+    
     setFormData(prev => ({
       ...prev,
       sections: [...prev.sections, newSection]
@@ -82,10 +92,38 @@ export function DocumentTypeModal({
   };
 
   const handleRemoveSection = (index) => {
+    // Remove the section from expanded sections
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(index);
+      // Adjust indices for sections after the removed one
+      const adjustedSet = new Set();
+      newSet.forEach(sectionIndex => {
+        if (sectionIndex < index) {
+          adjustedSet.add(sectionIndex);
+        } else if (sectionIndex > index) {
+          adjustedSet.add(sectionIndex - 1);
+        }
+      });
+      return adjustedSet;
+    });
+    
     setFormData(prev => ({
       ...prev,
       sections: prev.sections.filter((_, i) => i !== index)
     }));
+  };
+
+  const toggleSectionExpansion = (index) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   const handleAddRule = (sectionIndex) => {
@@ -242,6 +280,19 @@ export function DocumentTypeModal({
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleSectionExpansion(index)}
+                                className="p-1"
+                              >
+                                {expandedSections.has(index) ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4" />
+                                )}
+                              </Button>
                               <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
                               <h4 className="font-medium text-gray-900 dark:text-white">
                                 {section.name || `Section ${index + 1}`}
@@ -269,6 +320,9 @@ export function DocumentTypeModal({
                               </Button>
                             </div>
                           </div>
+                          
+                          {expandedSections.has(index) && (
+                            <>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -429,6 +483,8 @@ export function DocumentTypeModal({
                               </div>
                             )}
                           </div>
+                            </>
+                          )}
                         </CardContent>
                       </Card>
                     ))}
