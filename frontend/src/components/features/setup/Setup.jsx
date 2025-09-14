@@ -9,7 +9,7 @@ import { SectionRulesModal } from "./SectionRulesModal";
 import { useSetup } from "@/hooks/useSetup";
 import { useModal } from "@/hooks/useModal";
 import { Plus, Clock, Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Setup() {
   const {
@@ -28,6 +28,11 @@ export function Setup() {
   const createModal = useModal();
   const editModal = useModal();
   const rulesModal = useModal();
+
+  // Load document types when component mounts
+  useEffect(() => {
+    loadDocumentTypes();
+  }, []);
 
   const handleCreateDocumentType = () => {
     setEditingDocType(null);
