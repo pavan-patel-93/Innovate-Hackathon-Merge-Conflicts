@@ -149,11 +149,15 @@ export const aiChatAPI = {
   // Send a message to AI for analysis
   sendAIMessage: async (message, files = []) => {
     try {
+      console.log('[AI API] Sending message:', message);
+      console.log('[AI API] Files to send:', files.length, files.map(f => f.name || f.filename || 'unknown'));
+      
       const formData = new FormData();
       formData.append('message', message);
       
       files.forEach((file, index) => {
-        formData.append(`files`, file);
+        console.log(`[AI API] Appending file ${index}:`, file.name || file.filename, file.size);
+        formData.append('files', file);
       });
 
       const response = await api.post('/api/v1/ai/chat', formData, {

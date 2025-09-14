@@ -18,6 +18,7 @@ export function Chat() {
     uploadedFiles,
     setUploadedFiles,
     isTyping,
+    isLoading,
     sendMessage,
     handleFileUpload
   } = useChat();
@@ -37,7 +38,12 @@ export function Chat() {
         <CardContent className="flex-1 flex flex-col">
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-            {messages.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <Bot className="w-12 h-12 mx-auto mb-4 opacity-50 animate-pulse" />
+                <p>Loading chat history...</p>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>Start a conversation by uploading files or asking a question</p>

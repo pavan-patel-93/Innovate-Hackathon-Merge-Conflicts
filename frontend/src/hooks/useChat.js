@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { aiChatAPI } from "@/services/api";
 
 // Chat file structure
@@ -27,6 +27,7 @@ export function useChat() {
   const [input, setInput] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() && uploadedFiles.length === 0) return;
@@ -47,7 +48,7 @@ export function useChat() {
     setIsTyping(true);
 
     try {
-      // Call AI API
+      // Always use AI chat API - it handles both files and text
       const filesToSend = currentFiles.map(f => f.file || f);
       const aiResponse = await aiChatAPI.sendAIMessage(currentInput, filesToSend);
       
@@ -55,6 +56,7 @@ export function useChat() {
         id: Date.now() + 1,
         type: 'bot',
         content: aiResponse.response || aiResponse.message || 'Analysis completed successfully.',
+        uploadResults: aiResponse.upload_results || null,
         timestamp: new Date()
       };
       
@@ -99,6 +101,59 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
     setUploadedFiles(prev => [...prev, ...newFiles]);
   }, []);
 
+  // Load existing chat messages on component mount
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        setIsLoading(true);
+        const response = await aiChatAPI.getChatMessages();
+        
+        if (response.messages && response.messages.length > 0) {
+          // Convert database messages to frontend format
+          const formattedMessages = response.messages.reverse().map(msg => ({
+            id: msg._id || msg.id,
+            type: 'user',
+            content: msg.message,
+            timestamp: new Date(msg.created_at || msg.timestamp)
+          })).concat(response.messages.reverse().map(msg => ({
+            id: (msg._id || msg.id) + '_response',
+            type: 'bot',
+            content: msg.response,
+            timestamp: new Date(msg.created_at || msg.timestamp)
+          })));
+          
+          // Flatten and sort by timestamp
+          const allMessages = [];
+          response.messages.reverse().forEach(msg => {
+            allMessages.push({
+              id: msg._id || msg.id,
+              type: 'user',
+              content: msg.message,
+              timestamp: new Date(msg.created_at || msg.timestamp)
+            });
+            allMessages.push({
+              id: (msg._id || msg.id) + '_response',
+              type: 'bot',
+              content: msg.response,
+              timestamp: new Date(msg.created_at || msg.timestamp)
+            });
+          });
+          
+          // Sort by timestamp
+          allMessages.sort((a, b) => a.timestamp - b.timestamp);
+          setMessages(allMessages);
+        }
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+        // Don't show error to user, just start with empty chat
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadChatHistory();
+  }, []);
+
   const clearMessages = useCallback(() => {
     setMessages([]);
   }, []);
@@ -110,6 +165,7 @@ Based on regulatory guidelines, I recommend reviewing the document structure and
     uploadedFiles,
     setUploadedFiles,
     isTyping,
+    isLoading,
     sendMessage,
     handleFileUpload,
     clearMessages
