@@ -2,6 +2,7 @@
 
 import { BarChart3, MessageSquare, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/hooks/useUser";
 
 const navigationItems = [
   {
@@ -12,7 +13,7 @@ const navigationItems = [
   },
   {
     id: "analysis",
-    label: "Analysis",
+    label: "Assistant",
     icon: MessageSquare,
     description: "Chat with AI assistant for compliance analysis"
   },
@@ -20,17 +21,38 @@ const navigationItems = [
     id: "setup",
     label: "Setup",
     icon: Settings,
-    description: "Configure document types and validation rules"
+    description: "Configure document types and validation rules",
+    adminOnly: true
   }
 ];
 
 export function Sidebar({ activeTab, onTabChange }) {
+  const { user } = useUser();
+  
+  // Debug logging
+  console.log('Sidebar - Current user:', user);
+  console.log('Sidebar - User role:', user?.role);
+  console.log('Sidebar - User role type:', typeof user?.role);
+  console.log('Sidebar - Role comparison result:', user?.role === 'admin');
+  
+  // Filter navigation items based on user role
+  const filteredNavigationItems = navigationItems.filter(item => {
+    if (item.adminOnly) {
+      const isAdmin = user?.role === 'admin';
+      console.log(`Sidebar - Item ${item.id} adminOnly: ${item.adminOnly}, user role: "${user?.role}", isAdmin: ${isAdmin}`);
+      return isAdmin;
+    }
+    return true;
+  });
+  
+  console.log('Sidebar - Filtered navigation items:', filteredNavigationItems.map(item => item.id));
+
   return (
     <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Sidebar Navigation */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <nav className="space-y-2" role="navigation" aria-label="Main navigation">
-          {navigationItems.map((item) => {
+          {filteredNavigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             
